@@ -50,7 +50,7 @@ def train(is_load = False):
         forest = tree.DecisionTreeClassifier()
         forest = forest.fit(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')),
                             df.action)
-        pk.dump(forest, open(model_file, 'wb'))
+        pk.dump(forest, open(model_file, 'wb'), 2)
 
     forest = pk.load(open(model_file, 'rb'))
     predicts = forest.predict(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')))
