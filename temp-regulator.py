@@ -66,7 +66,7 @@ def colect_action():
 
 def process():
     #process_raw_data()
-    train()
+    train(True)
 
 def main():
   """"
