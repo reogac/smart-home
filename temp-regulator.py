@@ -3,7 +3,7 @@ import pandas as pd
 import argparse
 import os
 from datetime import datetime
-#from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier
 from sklearn import tree
 from sklearn.metrics import confusion_matrix
 import pickle as pk
@@ -46,8 +46,8 @@ def train(is_load = False):
     if is_load:
         forest = pk.load(open(model_file, 'rb'))
     else:
-        #forest = RandomForestClassifier(n_estimators=100)
-        forest = tree.DecisionTreeClassifier()
+        forest = RandomForestClassifier(n_estimators=100)
+        #forest = tree.DecisionTreeClassifier()
         forest = forest.fit(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')),
                             df.action)
         pk.dump(forest, open(model_file, 'wb'), 2)
