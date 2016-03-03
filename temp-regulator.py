@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 import numpy as np
 import pandas as pd
 import argparse
@@ -83,10 +85,8 @@ def predict(model, inputs):
     input_vect = np.array(inputs)
     return model.predict(input_vect)
 
-def collect_sensor():
-    pass
 
-def user_feedback():
+def reinforce():
     pass
 
 def parse_sensors(sensors):
@@ -95,8 +95,10 @@ def parse_sensors(sensors):
 def process(args):
     if (args.command == 'process'):
         print "process"
-        #df = process_data(args.csv_file)
-        #save_data(df, args.data_file)
+        if not args.csv_file:
+            raise EngineError("original data file not found")
+        df = process_data(args.csv_file)
+        save_data(df, args.data_file)
     elif (args.command == 'train'):
         print "train"
         #df = process_data(args.csv_file)
@@ -106,11 +108,14 @@ def process(args):
         print "predict"
         #inputs = parse_sensors(args.sensors)
 
-    elif (args.command == 'test'):
-        print "test"
+    elif (args.command == 'evaluate'):
+        print "evaluate"
         #df = process_data()
         #model = load_model()
         #print test_model(model, df)
+    elif (args.command == 'reinforce'):
+        print "reinformance learning"
+        #reinforce()
     else:
         raise EngineError("unknown command")
 
@@ -126,21 +131,31 @@ def main():
 
   parser = argparse.ArgumentParser(description="home air conditioner controller smart engine")
   command = parser.add_mutually_exclusive_group()
-  command.add_argument("-c", "--command", choices=('train','predict','test','process'),
-                      required=True, help="tell the engine to train model or make prediction")
-  command.add_argument("--train", dest="command", help="train prediction model", action="store_true",)
+  command.add_argument("-c", "--command", choices=['train','reinforce', 'predict','evaluate','process'],
+                       help="tell the engine to train model or make prediction")
+  command.add_argument("--train", dest="command", help="train prediction model", action="store_const",
+                       const="train")
+  command.add_argument("--predict", dest="command", help="make a prediction", action="store_const",
+                       const="predict")
+  command.add_argument("--process", dest="command", help="process raw data", action="store_const",
+                       const="process")
+  command.add_argument("--evaluate", dest="command", const = "evaluate",
+                       help="evaluate the prediction performance with cross validation "
+                            "<for analysis purpose only>", action="store_const")
+
+  command.add_argument("--reinforce", dest="command", help="reinforce the model with user feedbacks",
+                       action="store_const", const="reinforce")
 
   parser.add_argument("-d", "--data_file", action="store_true",
                       dest="data_file", help="file to save/load the processed sensor data")
-  parser.add_argument("-t", "--csv_file", action="store_true",
+  parser.add_argument("-t", "--csv_file",
                       dest="csv_file", help="file containing the original sensor data")
 
-  parser.add_argument("-m", "--model", dest="model_file", action="store_true",
+  parser.add_argument("-m", "--model", dest="model_file",
                       help="file to save/load the prediction model")
 
   parser.add_argument("-s", "--sensors", dest="sensors",
-                      help="data from sensors for that acts as input of prediction",
-                      action="store_true")
+                      help="data from sensors for that acts as input of prediction")
 
 
   args = parser.parse_args()
