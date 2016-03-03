@@ -3,8 +3,8 @@ import pandas as pd
 import argparse
 import os
 from datetime import datetime
-#from sklearn.ensemble import RandomForestClassifier
-from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
+#from sklearn import tree
 from sklearn.metrics import confusion_matrix
 import pickle as pk
 #from sklearn.externals import joblib
@@ -23,6 +23,7 @@ def predict():
 def process_raw_data():
     print "loading sensor data ..."
     df = pd.read_csv(database)
+    df = df.loc[0:5000,]
     print "completed\n"
     print "now pre-processing the data..."
     nrows = len(df)
@@ -53,8 +54,8 @@ def train(is_load = False):
         print "completed!\n"
     else:
         print "building the model..."
-        #forest = RandomForestClassifier(n_estimators=100)
-        forest = tree.DecisionTreeClassifier()
+        forest = RandomForestClassifier(n_estimators=100)
+        #forest = tree.DecisionTreeClassifier()
         forest = forest.fit(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')),
                             df.action)
         print "completed\nsaving model...\n"
@@ -74,7 +75,7 @@ def colect_action():
     pass
 
 def process():
-    train(True)
+    train()
 
 def main():
   """"
