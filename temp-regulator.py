@@ -21,7 +21,10 @@ def predict():
     pass
 
 def process_raw_data():
+    print "loading sensor data ..."
     df = pd.read_csv(database)
+    print "completed\n"
+    print "now pre-processing the data..."
     nrows = len(df)
     # convert string to time object
     df['time'] = df.time.apply(lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
@@ -38,22 +41,28 @@ def process_raw_data():
         elif (df.ac_status[i] == 0) and (df.ac_status[i-1]) == 1:
             df.loc[i, 'action'] = -1 #TURN OFF
 
-
+    print "completed!\n"
     return df
 
 def train(is_load = False):
+    print "hello world\n"
     df = process_raw_data()
     if is_load:
+        print "loading the model..."
         forest = pk.load(open(model_file, 'rb'))
+        print "completed!\n"
     else:
+        print "building the model..."
         forest = RandomForestClassifier(n_estimators=100)
         #forest = tree.DecisionTreeClassifier()
         forest = forest.fit(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')),
                             df.action)
+        print "completed\nsaving model...\n"
         pk.dump(forest, open(model_file, 'wb'), 2)
-
-    forest = pk.load(open(model_file, 'rb'))
+        print "completed!\n"
+    print "predicting..."
     predicts = forest.predict(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')))
+    print "completed!\n" 
     con_matrix = confusion_matrix(df.action, predicts)
 
     print(con_matrix)
@@ -65,7 +74,6 @@ def colect_action():
     pass
 
 def process():
-    #process_raw_data()
     train(True)
 
 def main():
