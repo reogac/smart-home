@@ -3,26 +3,32 @@ import pandas as pd
 import argparse
 import os
 from datetime import datetime
-from sklearn.ensemble import RandomForestClassifier
-#from sklearn import tree
+#from sklearn.ensemble import RandomForestClassifier
+from sklearn import tree
 from sklearn.metrics import confusion_matrix
 import pickle as pk
 #from sklearn.externals import joblib
 
-args = None
+predictors = ('ac_status', 'temp', 'humidity', 'light', 'CO2', 'dust', 'day', 'hour')
+label = 'action'
 
-#model_file = "forest/forest.pkl"
-model_file = "model.dat"
-
-database = "sensor-data.csv"
 power_cut = 0.01 #cut value for positive power consumption
 
-def predict():
-    pass
+class EngineError(Exception):
+    def _init_(self, msg):
+        self.__message = msg
+    def _str_(self):
+        return repr(self.__message)
 
-def process_raw_data():
+def load_data(filename):
+    return pk.load(filename)
+
+def save_data(data, filename):
+    pk.dump(data, filename, 2)
+
+def process_data(filename):
     print "loading sensor data ..."
-    df = pd.read_csv(database)
+    df = pd.read_csv(filename)
     df = df.loc[0:5000,]
     print "completed\n"
     print "now pre-processing the data..."
@@ -45,37 +51,68 @@ def process_raw_data():
     print "completed!\n"
     return df
 
-def train(is_load = False):
-    print "hello world\n"
-    df = process_raw_data()
-    if is_load:
-        print "loading the model..."
-        forest = pk.load(open(model_file, 'rb'))
-        print "completed!\n"
-    else:
-        print "building the model..."
-        forest = RandomForestClassifier(n_estimators=100)
-        #forest = tree.DecisionTreeClassifier()
-        forest = forest.fit(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')),
-                            df.action)
-        print "completed\nsaving model...\n"
-        pk.dump(forest, open(model_file, 'wb'), 2)
-        print "completed!\n"
-    print "predicting..."
-    predicts = forest.predict(df.as_matrix(('temp', 'humidity', 'light', 'CO2', 'dust', 'hour', 'day')))
-    print "completed!\n" 
-    con_matrix = confusion_matrix(df.action, predicts)
+def save_model(model, filename):
+    print "completed\nsaving model...\n"
+    pk.dump(model, open(file_name, 'wb'), 2)
+    print "completed!\n"
 
-    print(con_matrix)
+
+def load_model(filename):
+    print "loading the model..."
+    model = pk.load(open(filename, 'rb'))
+    print "completed!\n"
+    return model
+
+def train_model(data):
+    print "building the model..."
+    #model = RandomForestClassifier(n_estimators=100)
+    model = tree.DecisionTreeClassifier()
+    x = data.as_matrix(predictors)
+    y = data.loc[:,label]
+    model = model.fit(x, y)
+    return model
+
+def test_model(model, data):
+    x = data.as_matrix(predictors)
+    y = data.loc[:, label]
+    pred_y = model.predict(x)
+    con_mat = confusion_matrix(y, pred_y)
+    return con_mat
+
+def predict(model, inputs):
+    input_vect = np.array(inputs)
+    return model.predict(input_vect)
 
 def collect_sensor():
     pass
 
-def colect_action():
+def user_feedback():
     pass
 
-def process():
-    train()
+def parse_sensors(sensors):
+    pass
+
+def process(args):
+    if (args.command == 'process'):
+        print "process"
+        #df = process_data(args.csv_file)
+        #save_data(df, args.data_file)
+    elif (args.command == 'train'):
+        print "train"
+        #df = process_data(args.csv_file)
+        #model = train_model(df)
+        #save_model(model)
+    elif (args.command == 'predict'):
+        print "predict"
+        #inputs = parse_sensors(args.sensors)
+
+    elif (args.command == 'test'):
+        print "test"
+        #df = process_data()
+        #model = load_model()
+        #print test_model(model, df)
+    else:
+        raise EngineError("unknown command")
 
 def main():
   """"
@@ -85,45 +122,32 @@ def main():
     - predict user action taken on air conditioner
     - collect user feed back
   :return:
+  """
 
+  parser = argparse.ArgumentParser(description="home air conditioner controller smart engine")
+  command = parser.add_mutually_exclusive_group()
+  command.add_argument("-c", "--command", choices=('train','predict','test','process'),
+                      required=True, help="tell the engine to train model or make prediction")
+  command.add_argument("--train", dest="command", help="train prediction model", action="store_true",)
 
-  global args
-  parser = argparse.ArgumentParser(description="A simple photo organizer")
-  parser.add_argument("src_dir", help="photo directory")
-  parser.add_argument("dest_dir", help="target directory")
-  parser.add_argument("-r", "--recursive", action="store_true",
-                      dest="recursive", help="process sub-directories")
-  parser.add_argument("-d", "--dry", dest="dry", action="store_true",
-                      help="dry run")
-  parser.add_argument("-c", "--copy", dest="copy",
-                      help="copy photos instead of moving",
+  parser.add_argument("-d", "--data_file", action="store_true",
+                      dest="data_file", help="file to save/load the processed sensor data")
+  parser.add_argument("-t", "--csv_file", action="store_true",
+                      dest="csv_file", help="file containing the original sensor data")
+
+  parser.add_argument("-m", "--model", dest="model_file", action="store_true",
+                      help="file to save/load the prediction model")
+
+  parser.add_argument("-s", "--sensors", dest="sensors",
+                      help="data from sensors for that acts as input of prediction",
                       action="store_true")
-  parser.add_argument("-v", "--video", dest="video",
-                      help="handle videos", action="store_true")
-  parser.add_argument("-s", "--separate", dest="separate",
-                      help="handle videos and photos separately",
-                      action="store_true")
-  parser.add_argument("-t", "--use-ctime", dest="ctime",
-                      help="use file created time if neither exif information"
-                           " nor file name can reveal the photo taken time",
-                      action="store_true")
-  parser.add_argument("-o", "--overwrite", dest="overwrite",
-                      help="overwriting existing files", action="store_true")
-  parser.add_argument("-m", "--months", dest="months", help="a string of names"
-                                                            "separated by commas that be used as month directories,"
-                                                            "or \'system\' (default) for using system month names,"
-                                                            "or \'number\' for using month number as names, ",
-                      type=get_months, default="system")
-  parser.add_argument("-y", "--year-prefix",
-                      help="prefix for year directory", dest="year")
+
 
   args = parser.parse_args()
 
   try:
-      process()
-      except PhorgError as e:
+      process(args)
+  except EngineError as e:
       print e
-  """
-  df = process()
 
 if __name__ == "__main__" : main()
