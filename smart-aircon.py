@@ -233,27 +233,28 @@ def main():
 
     global SENSOR_PICKLE
     global MODEL_PICKLE
-
-    parser = argparse.ArgumentParser(description="Home air conditioner controller smart engine",
-                                     usage='%(prog)s command [options]')
-    parser.add_argument("command", choices=['process', 'train', 'predict', 'reinforce','evaluate'],
-                         help="tell the program what to do")
-
-
-    parser.add_argument("-t", "--csv_file", dest="csv_file",
-                        help="file containing the original sensor data, default name = \'" + SENSOR_CSV + "\'")
-    parser.add_argument("-d", "--data_file", dest="data_file", default=SENSOR_PICKLE,
-                        help="file to save/load the processed sensor data, default name = \'" + SENSOR_PICKLE + "\'")
-    parser.add_argument("-m", "--model", dest="model_file", default=MODEL_PICKLE,
-                        help="file to save/load the prediction model, default name = \'" + MODEL_PICKLE + "\'")
-    parser.add_argument("-s", "--sensors", dest="sensors",
-                        help="sensor data for which prediction should be made, here is a sample format: "
-                             "\"ac_status=1, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2, hour=19.5\"")
-    parser.add_argument("-l", "--log", dest="log", help="where to save log messages")
-    args = parser.parse_args()
     try:
+        parser = argparse.ArgumentParser(description="Home air conditioner controller smart engine",
+                                         usage='%(prog)s command [options]')
+        parser.add_argument("command", choices=['process', 'train', 'predict', 'reinforce','evaluate'],
+                            help="tell the program what to do")
+
+        parser.add_argument("-t", "--csv_file", dest="csv_file",
+                            help="file containing the original sensor data, default name = \'" + SENSOR_CSV + "\'")
+        parser.add_argument("-d", "--data_file", dest="data_file", default=SENSOR_PICKLE,
+                            help="file to save/load the processed sensor data, default name = \'" + SENSOR_PICKLE + "\'")
+        parser.add_argument("-m", "--model", dest="model_file", default=MODEL_PICKLE,
+                            help="file to save/load the prediction model, default name = \'" + MODEL_PICKLE + "\'")
+        parser.add_argument("-s", "--sensors", dest="sensors",
+                            help="sensor data for which prediction should be made, here is a sample format: "
+                                 "\"ac_status=1, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2, hour=19.5\"")
+        parser.add_argument("-l", "--log", dest="log", help="where to save log messages")
+        args = parser.parse_args()
+
         process(args)
     except EngineError as e:
+        sys.stderr.write(str(e) + "\n")
+    except Exception as e:
         sys.stderr.write(str(e) + "\n")
 
 if __name__ == "__main__" : main()
