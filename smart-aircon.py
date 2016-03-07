@@ -3,8 +3,6 @@
 
 import argparse
 import logging
-import numpy as np
-import pandas as pd
 import pickle as pk
 import sys
 
@@ -36,6 +34,7 @@ class EngineError(Exception):
         return repr(self.__message)
 
 def load_data(filename):
+    import pandas as pd
     logging.info("load processed data from \'"+ filename + "\'")
     try:
         df = pd.read_pickle(filename)
@@ -57,6 +56,8 @@ def save_data(data, filename):
 
 def process_data(filename):
     from datetime import datetime
+    import numpy as np
+    import pandas as pd
 
     logging.info("load sensor data from \'" + filename + "\'")
     try:
@@ -196,6 +197,7 @@ def process(args):
         logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
     if (args.command == 'process'):
+
         if not args.csv_file:
             args.csv_file = SENSOR_CSV
 
