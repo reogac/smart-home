@@ -2,7 +2,6 @@
 
 
 import argparse
-from datetime import datetime
 import logging
 import numpy as np
 import pandas as pd
@@ -57,6 +56,8 @@ def save_data(data, filename):
         raise EngineError("Failed to save data")
 
 def process_data(filename):
+    from datetime import datetime
+
     logging.info("load sensor data from \'" + filename + "\'")
     try:
         df = pd.read_csv(filename)
@@ -96,8 +97,6 @@ def save_model(model, filename):
         raise EngineError("Failed to save model")
 
 def load_model(filename):
-#    from sklearn import tree
-#    from sklearn.ensemble import RandomForestClassifier
 
     logging.info("load model from \'" + filename + "\'")
     try:
