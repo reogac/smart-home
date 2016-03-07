@@ -79,7 +79,7 @@ Program usage will be shown up with this command:
 ## <a id="training-model"/>Training-model
 
 
-Before prediction can be made, a model must be trained from observed data. Usually the training should be performed on a computer with high computation power. However, some algorithms such as decision tree, random forest, can perform reasonably comfortable on lightweight machines such as Beaglebone black, as long as the data size is **reasonable small**.
+Before prediction can be made, a model must be trained from observed data. Usually the training should be performed on a computer with high computation power. However, some algorithms such as decision tree, random forest, can perform reasonably comfortable on lightweight machines such as Beaglebone black, as long as the data size is **not too large**.
 
 The input for training model can be raw data in csv format or processed data which was the output of [data processing step](#data-processing).
 
