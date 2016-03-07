@@ -7,8 +7,8 @@ import logging
 import numpy as np
 import pandas as pd
 import pickle as pk
-#from sklearn.ensemble import RandomForestClassifier
 from sklearn import tree
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import confusion_matrix
 import sys
 
@@ -107,11 +107,15 @@ def load_model(filename):
         raise EngineError("Failed to load model")
     return model
 
-def train_model(data):
+def train_model(data, method):
     logging.info("train model")
     try:
-        #model = RandomForestClassifier(n_estimators=100)
-        model = tree.DecisionTreeClassifier()
+        if (method=="tree"):
+            model = tree.DecisionTreeClassifier()
+        elif (method=="forest"):
+            model = RandomForestClassifier(n_estimators=100)
+        else:
+            raise EngineError("Unexpected error")
         x = data.as_matrix(predictors)
         y = data.loc[:,label]
         model = model.fit(x, y)
@@ -199,7 +203,7 @@ def process(args):
             save_data(df, args.data_file)
         else:
             df = load_data(args.data_file)
-            model = train_model(df)
+            model = train_model(df, args.classifier)
             save_model(model, args.model_file)
     elif (args.command == 'predict'):
         inputs = parse_sensors(args.sensors)
@@ -238,7 +242,8 @@ def main():
                                          usage='%(prog)s command [options]')
         parser.add_argument("command", choices=['process', 'train', 'predict', 'reinforce','evaluate'],
                             help="tell the program what to do")
-
+        parser.add_argument("-c", "--classifier", choices=['tree', 'forest'], dest="classifier", default="tree",
+                            help="Select classification model (Decision tree or Random forest)")
         parser.add_argument("-t", "--csv_file", dest="csv_file",
                             help="file containing the original sensor data, default name = \'" + SENSOR_CSV + "\'")
         parser.add_argument("-d", "--data_file", dest="data_file", default=SENSOR_PICKLE,
