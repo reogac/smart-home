@@ -50,7 +50,7 @@ def load_data(filename):
 
 def save_data(data, filename):
     """
-    TODO: convert dataframe to numpy matrix then save to file
+    TODO: convert data frame to numpy matrix then save to file
     """
     logging.info("saving the data into \'"+ filename + "\'")
     try:
@@ -66,7 +66,7 @@ def process_data(filename):
     except Exception as e:
         logging.error(str(e))
         raise EngineError("Failed to read csv file")
-#    df = df.loc[0:5000,]
+    df = df.loc[0:5000,]
 
     logging.info("pre-processing the data")
     try:
