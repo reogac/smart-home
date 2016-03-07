@@ -213,6 +213,7 @@ def process(args):
             model = train_model(df, args.classifier)
             save_model(model, args.model_file)
     elif (args.command == 'predict'):
+        import numpy as np
         from sklearn import tree
         from sklearn.ensemble import RandomForestClassifier
         inputs = parse_sensors(args.sensors)
