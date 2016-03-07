@@ -1,7 +1,5 @@
 
-# Program usage
-
-## Overview
+# Overview
 
 `smart-aircon` is a small python program whose main job is to predict air conditioner controlling actions from user. The prediction is based on user context information collected through sensor system.
 
@@ -22,7 +20,7 @@ You will need [git](https://en.wikipedia.org/wiki/Git_(software)) to clone the r
 ```
 Several python packages are requred for running the program, including [scikit-learn](http://scikit-learn.org) (for classification model learning), [pickle](https://docs.python.org/3/library/pickle.html) (for python objsect serialization) and [pandas](http://pandas.pydata.org/) (for data frame processing).
 
-If you are not familiar with python package installation, perhaps it is a better idea to try the program on a ready-to-run computer. I have installed the program as well as neccesary packages on a Beaglebone black (BBB) machine. The machine can be accessed using ssh:
+If you are not familiar with python package installation, perhaps it is a better idea to try the program on a ready-to-run computer. I have installed the program as well as neccesary packages on a Beaglebone black (BBB) machine. The machine can be accessed using ssh (debian/temppwd):
 
 ```bash
     ssh debian@reogac.iptime.org -p 2200
@@ -34,10 +32,10 @@ Once you are at the terminal console of the BBB, go the folder that has the prog
     cd ~/smart-home
 ```
 
-From there, follows below instructions for running the program.
+From there, following below instructions to run the program.
 
 
-## Usage
+# Usage
 
 Program usage will be shown up with this command:
 
@@ -76,10 +74,10 @@ Program usage will be shown up with this command:
       -l LOG, --log LOG     where to save log messages
 
 
-## <a id="training-model"/>Training-model
+## <a id="training-model"/>Training model
 
 
-Before prediction can be made, a model must be trained from observed data. Usually the training should be performed on a computer with high computation power. However, some algorithms such as decision tree, random forest, can perform reasonably comfortable on lightweight machines such as Beaglebone black, as long as the data size is **not too large**.
+Before prediction can be made, a model must be trained from observed data. Usually the training should be performed on a computer with high computation power. However, some algorithms such as decision tree, random forest, can perform reasonably comfortable on lightweight machines such as Beaglebone black, as long as the data size is **reasonable small**.
 
 The input for training model can be raw data in csv format or processed data which was the output of [data processing step](#data-processing).
 
@@ -99,15 +97,15 @@ If the training succeed, it should save the model into the specified `model-file
 
 Training should be performed periodically. It can be done easily on any linux system by using a time-based scheduler such as [crontab](https://en.wikipedia.org/wiki/Cron).
 
-### Note
-Currently a model trained on 64 bit computer can not be loaded on BBB (32 bit machine). The reason is that `scikit-learn` package use different data types on the two architectures. A work around solution is to install a 32bit linux OS for training the model.
+## Note
+Currently model trained on 64 bit computer can not be loaded on BBB (32 bit machine). The reason is that `scikit-learn` package uses different data types on the two architectures. A work around solution is to install a 32bit linux OS for training the model.
 
 
-## <a id="data-processing"/>Data pre-processing
+# <a id="data-processing/>Data pre-processing
 
-Training model consists of two consecutive steps: pre-processing raw data and learning model from the processed data. Both steps are computational extensive on lightweight machines, thus it is advisible to perform one or both of them on more powerful computer then copy the output to the target machine. While different algorithms may requires diffrent levels of computational power, the requirment for data pre-processing stays the same, mostly depending on the size of the data. Breaking down the training into two threfore makes deployment more flexible.
+Training model consists of two consecutive steps: pre-processing raw data and learning model (from the processed data). Both steps are computational extensive on lightweight machine, thus it is advisible to perform one or both of them on more powerful computer then copy the output to the target machine. While different classification algorithms may require diffrent levels of computational power, the requirment for data pre-processing stays the same, mostly depending on the size of the data. Breaking down the training into two therefore makes deployment more flexible.
 
-Pre-processing raw data can be perform with this follwoing command:
+Pre-processing raw data can be perform with this following command:
 
 ``` bash
     smart-aircon process -t raw--data-file -d processed-data-file
@@ -115,23 +113,23 @@ Pre-processing raw data can be perform with this follwoing command:
 Here `raw-data-file` is the sensor data collected in a csv format and `processed-data-file` is the output file. The processed data then can be used as input for [model training](#training-model)
 
 
-## Making a prediction
+# Making a prediction
 
-Once the model is trained, the program can make prediction of user action based on the input data from sensor system. Inputs should be all avaiable information from sensors at the time of predition. To make a prediction, the following command should be entered:
+Once the model is trained, the program can make prediction of user action based on input data from sensor system. Inputs should be all sensor information measured at the time of predition. To make a prediction, the following command should be called:
 
 ```bash
     smart-aircon predict --sensors sensor-data
 ```
-where the `sensor-data` format should be followed the below example:
+where the `sensor-data` should conform to the format examplified like this:
 ```bash
 "ac_status=1, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2,hour=19.5"
 ```
 
 The command return the predicted action of user which can be one of three possible outcomes: `TURN-ON`, `TURN-OFF` or `DO-NOTHING`.
 
-### When to make prediction?
+## When to make prediction?
 
-Let supposed that we have a module called `Action Recommender` that interact with user and recommend him which action he should take then act accordingly to the his decision (turn on/off the air conditioner). Basically, the module should interface with three other modules:
+Let suppose that we have a module called `Action Recommender` that interacts with user and recommend him which action he should take then act accordingly to the his decision (turn on/off the air conditioner). Basically, the module should interface with three other modules:
 
  + interacts with user mobile application (it can be `restful` or any kind of message-based interface)
  + interacts with prediction module (this program, aka `smart-aircon`; interface is command line)
@@ -139,14 +137,9 @@ Let supposed that we have a module called `Action Recommender` that interact wit
  
 The module should not wait for user to initiate a prediction request, instead it has to make prediction pediodically. In order to do so, it should read sensor data, for example, in every 3 minutes, then call the prediction command to get the predicted user action. Depending on the prediction outcome, it can choose either to ignore (do nothing) or recommend user to take a action (turn on or turn off).
 
-Therefore, the `Action Recommender` should be implemented as a daemon or it can be a script associated with a crontab job that runs periodically (3 minutes).
+Therefore, the `Action Recommender` should be implemented as a daemon or it can be a bash or python script associated with a crontab job that runs periodically (3 minutes).
 
-## Model reinforcemence
+# Model reinforcemence
 
-Model reinforcement is the process of re-training the model upon receiving user's feedback, with expectation of improving prediction quality. Currently we are not i
+Model reinforcement is the process of re-training the model upon receiving user's feedback, with expectation of improving prediction quality. As the user feedback data is not available at the moment, this feature has not been implemented. Further research will need to find a appropriate reinformance learning method for the problem.
 
-
-
-```python
-
-```
