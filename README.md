@@ -5,12 +5,13 @@
 
 In order to fulfil such a job, it firstly needs to build a prediction model from previously observed data, and certainly before that, it also needs to perform data pre-processing. So, basically `smart-aircon.py` will do these following tasks:
 
-+ Process raw data. Sensor data in raw format can be processed for constructing the prediction model.
-+ Train model from processed data; the model are later used for generating prediction.
-+ Make a prediction given a sensor data input with the trained model.
-+ Evalate prediction performance of the model (for analysis purpose, not yet implemented).
-+ Reinforce model. Improve model with user's feedback data (more research needs).
++ Processing raw data. Sensor data in raw format can be processed for constructing the prediction model.
++ Training model from processed data; the model are later used for generating prediction.
++ Making prediction given a sensor data input with the trained model.
++ Evaluating prediction performance of the model (for analysis purpose, not yet implemented).
++ Reinforcing model; using user's feedback data to improve model prediction performance (more research needs).
 
+### Download and installation
 The program source code can be downloaded from [this github repository](https://github.com/reogac/smart-home.git).
 
 You will need [git](https://en.wikipedia.org/wiki/Git_(software)) to clone the repository
@@ -20,6 +21,7 @@ You will need [git](https://en.wikipedia.org/wiki/Git_(software)) to clone the r
 ```
 Several python packages are requred for running the program, including [scikit-learn](http://scikit-learn.org) (for classification model learning), [pickle](https://docs.python.org/3/library/pickle.html) (for python objsect serialization) and [pandas](http://pandas.pydata.org/) (for data frame processing).
 
+### Demo
 If you are not familiar with python package installation, perhaps it is a better idea to try the program on a ready-to-run computer. I have installed the program as well as neccesary packages on a Beaglebone black (BBB) machine. The machine can be accessed using ssh (debian/temppwd):
 
 ```bash
