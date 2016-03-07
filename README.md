@@ -76,7 +76,7 @@ Program usage will be shown up with this command:
       -l LOG, --log LOG     where to save log messages
 
 
-## Training model ## {#training-model}
+## Training-model<a id="training-model"/>
 
 
 Before prediction can be made, a model must be trained from observed data. Usually the training should be performed on a computer with high computation power. However, some algorithms such as decision tree, random forest, can perform reasonably comfortable on lightweight machines such as Beaglebone black, as long as the data size is **reasonable small**.
@@ -103,7 +103,7 @@ Training should be performed periodically. It can be done easily on any linux sy
 Currently a model trained on 64 bit computer can not be loaded on BBB (32 bit machine). The reason is that `scikit-learn` package use different data types on the two architectures. A work around solution is to install a 32bit linux OS for training the model.
 
 
-## Data pre-processing ## {#data-processing}
+## Data pre-processing <a id="data-processing"/>
 
 Training model consists of two consecutive steps: pre-processing raw data and learning model from the processed data. Both steps are computational extensive on lightweight machines, thus it is advisible to perform one or both of them on more powerful computer then copy the output to the target machine. While different algorithms may requires diffrent levels of computational power, the requirment for data pre-processing stays the same, mostly depending on the size of the data. Breaking down the training into two threfore makes deployment more flexible.
 
