@@ -144,6 +144,7 @@ def evaluate_model(model, data):
     return con_mat
 
 def predict(model, inputs):
+    import numpy as np
     logging.info("make a prediction")
     try:
         input_vect = np.array(inputs)
@@ -159,6 +160,7 @@ def reinforce():
     raise EngineError("reinformance learning has not been implemented yet!", False)
 
 def parse_sensors(sensors):
+    import numpy as np
     if not sensors:
         raise EngineError("Sensor data is not provided", False)
     sensors = sensors.replace(' ', '') #remove all whitespaces
@@ -213,9 +215,10 @@ def process(args):
             model = train_model(df, args.classifier)
             save_model(model, args.model_file)
     elif (args.command == 'predict'):
-        import numpy as np
+
         from sklearn import tree
         from sklearn.ensemble import RandomForestClassifier
+
         inputs = parse_sensors(args.sensors)
         model = load_model(args.model_file)
         action = predict(model, inputs)
