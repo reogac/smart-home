@@ -7,9 +7,6 @@ import logging
 import numpy as np
 import pandas as pd
 import pickle as pk
-from sklearn import tree
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import confusion_matrix
 import sys
 
 
@@ -99,6 +96,9 @@ def save_model(model, filename):
         raise EngineError("Failed to save model")
 
 def load_model(filename):
+#    from sklearn import tree
+#    from sklearn.ensemble import RandomForestClassifier
+
     logging.info("load model from \'" + filename + "\'")
     try:
         model = pk.load(open(filename, 'rb'))
@@ -108,14 +108,20 @@ def load_model(filename):
     return model
 
 def train_model(data, method):
-    logging.info("train model")
+
+    from sklearn import tree
+    from sklearn.ensemble import RandomForestClassifier
+
     try:
         if (method=="tree"):
             model = tree.DecisionTreeClassifier()
+            method_name="Decision Tree"
         elif (method=="forest"):
             model = RandomForestClassifier(n_estimators=100)
+            method_name="Random Forest"
         else:
             raise EngineError("Unexpected error")
+        logging.info("train a " + method_name + " model")
         x = data.as_matrix(predictors)
         y = data.loc[:,label]
         model = model.fit(x, y)
@@ -125,6 +131,7 @@ def train_model(data, method):
     return model
 
 def evaluate_model(model, data):
+    from sklearn.metrics import confusion_matrix
     logging.info("evaluate model")
     try:
         x = data.as_matrix(predictors)
@@ -158,7 +165,7 @@ def parse_sensors(sensors):
     assignments = sensors.split(",") #retrieve sensor value assignments
     pairs = {}
     for a in assignments:
-        pair = a.split(":")
+        pair = a.split("=")
         if len(pair) != 2:
             raise EngineError("Failed to parse the sensor data: " + a, False)
         p = pair[0]
@@ -168,17 +175,16 @@ def parse_sensors(sensors):
         pairs[p] = v
 
     sensor_values = np.zeros(len(predictors), float)
-    print sensor_values
+
 
     for i in range(len(predictors)):
         p = predictors[i]
-        print p
 
         if not pairs.has_key(p):
             raise EngineError("the \'" + p + "\' variable is missing", False)
         sensor_values[i] = pairs[p]
 
-    return sensor_values
+    return sensor_values.reshape(1,-1)
 
 def process(args):
     global log_to_file
@@ -206,6 +212,8 @@ def process(args):
             model = train_model(df, args.classifier)
             save_model(model, args.model_file)
     elif (args.command == 'predict'):
+        from sklearn import tree
+        from sklearn.ensemble import RandomForestClassifier
         inputs = parse_sensors(args.sensors)
         model = load_model(args.model_file)
         action = predict(model, inputs)
