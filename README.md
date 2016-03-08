@@ -1,4 +1,4 @@
-
+  
 ## Overview
 
 `smart-aircon` is a small python program whose main job is to predict air conditioner controlling actions from user. The prediction is based on user context information collected through sensor system.
@@ -25,7 +25,7 @@ Several python packages are requred for running the program, including [scikit-l
 If you are not familiar with python package installation, perhaps it is a better idea to try the program on a ready-to-run computer. I have installed the program as well as neccesary packages on a Beaglebone black (BBB) machine. The machine can be accessed using ssh (debian/temppwd):
 
 ```bash
-    ssh debian@reogac.iptime.org -p 2200
+    ssh debian@reogac.iptime.org -p 2222
 ```
 
 Once you are at the terminal console of the BBB, go the folder that has the program:
