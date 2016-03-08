@@ -120,9 +120,9 @@ Here `raw-data-file` is the sensor data collected in a csv format and `processed
 Once the model is trained, the program can make prediction of user action based on input data from sensor system. Inputs should be all sensor information measured at the time of predition. To make a prediction, the following command should be called:
 
 ```bash
-    smart-aircon predict --sensors sensor-data
+    smart-aircon predict -m model-file -s sensor-data
 ```
-where the `sensor-data` should conform to the format examplified like this:
+where `model-file` is the previously trained model and the `sensor-data` should conform to the format examplified like this:
 ```bash
 "ac_status=1, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2,hour=19.5"
 ```
