@@ -15,31 +15,35 @@ class ReaderWriter(threading.Thread):
                     stopbits=serial.STOPBITS_ONE,
                     bytesize=serial.EIGHTBITS
                     )
-        self.port.flush() #clearing buffer
         print self.port.isOpen()
         self.alive = True
         self.queue = data
         self.key = key
-	threading.Thread.__init__(self)
+    threading.Thread.__init__(self)
 
     def run(self):
+        self.port.flush() #clearing input buffer
+        bf = ""
         while (self.alive):
+            #Tell the port that I want more data
             self.port.write(self.key)
             print "write"
-            bf = ""
+
             while self.port.inWaiting():
                 bf += self.port.read()
-	    if (len(bf) == 32) :
+            l = len(bf)
+            if (l >= 32) :
                 print bf
-                self.queue.put(bf)
-            elif len(bf)>0:
+                self.queue.put(bf[0:32])
+                bf = bf[32:]
+            else:
                 print "got this: " + bf
             time.sleep(PROBING_INTERVAL)
 
         self.port.close()
 
     def set_stop(self):
-	print "kill it"
+    print "kill it"
         self.alive = False
  
 def parse_data(data):
