@@ -19,7 +19,7 @@ class ReaderWriter(threading.Thread):
         self.alive = True
         self.queue = data
         self.key = key
-    threading.Thread.__init__(self)
+        threading.Thread.__init__(self)
 
     def run(self):
         self.port.flush() #clearing input buffer
@@ -43,7 +43,7 @@ class ReaderWriter(threading.Thread):
         self.port.close()
 
     def set_stop(self):
-    print "kill it"
+        print "kill it"
         self.alive = False
  
 def parse_data(data):

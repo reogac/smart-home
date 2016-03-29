@@ -3,24 +3,17 @@
 
 import argparse
 import logging
+import numpy as np
 import pickle as pk
 import sys
 from modeling import EngineError
+from  modeling import log_to_file
 
 SENSOR_CSV = "sensor.csv"
 SENSOR_PICKLE = "sensor.pk"
 MODEL_PICKLE = "model.pk"
-log_to_file = False
-
-predictors = ('ac_status', 'temp', 'humidity', 'light', 'CO2', 'dust', 'day', 'hour')
-label = 'action'
-
-power_cut = 0.01 #cut value for positive power consumption
-
-
 
 def load_data(filename):
-    import pandas as pd
     logging.info("load processed data from \'"+ filename + "\'")
     try:
         df = pk.load(open(filename, 'rb'))
@@ -30,8 +23,7 @@ def load_data(filename):
     return df
 
 def save_data(data, filename):
-    """
-    TODO: convert data frame to numpy matrix then save to file
+    """save data to file
     """
     logging.info("saving the data into \'"+ filename + "\'")
     try:
@@ -86,7 +78,6 @@ def save_model(model, filename):
         raise EngineError("Failed to save model")
 
 def load_model(filename):
-
     logging.info("load model from \'" + filename + "\'")
     try:
         model = pk.load(open(filename, 'rb'))
@@ -96,11 +87,10 @@ def load_model(filename):
     return model
 
 def predict(model, inputs):
-    import numpy as np
     logging.info("make a prediction")
     try:
-        input_vect = np.array(inputs)
-        pred = model.predict(input_vect)
+        #input_vect = np.array(inputs)
+        pred = model.predict(inputs)
     except Exception as e:
         logging.error(str(e))
         raise EngineError("Failed to make a prediction")
@@ -112,10 +102,13 @@ def reinforce():
     raise EngineError("reinformance learning has not been implemented yet!", False)
 
 def parse_sensors(sensors):
-    import numpy as np
+    from modeling import POWER_CUT
+    predictors = ('temp', 'humidity', 'light', 'co2', 'dust', 'day', 'hour')
+
     if not sensors:
         raise EngineError("Sensor data is not provided", False)
     sensors = sensors.replace(' ', '') #remove all whitespaces
+    sensors = sensors.lower()
     assignments = sensors.split(",") #retrieve sensor value assignments
     pairs = {}
     for a in assignments:
@@ -124,21 +117,36 @@ def parse_sensors(sensors):
             raise EngineError("Failed to parse the sensor data: " + a, False)
         p = pair[0]
         v = float(pair[1])
-        if p not in predictors:
+        if (p!="power") and (p not in predictors):
             raise EngineError(p + " is not a predictor", False)
         pairs[p] = v
 
     sensor_values = np.zeros(len(predictors), float)
 
+    power = 0 #STATUS_OFF
+    if pairs.has_key('power'):
+        if float(pairs['power']) > POWER_CUT:
+            power = 1 #STATUS_ON
 
     for i in range(len(predictors)):
         p = predictors[i]
-
         if not pairs.has_key(p):
             raise EngineError("the \'" + p + "\' variable is missing", False)
         sensor_values[i] = pairs[p]
 
-    return sensor_values.reshape(1,-1)
+    return [power, sensor_values.reshape(1,-1)]
+
+def print_confusion_matrix(c, labels):
+    n = c.shape[0]
+    s = "act\pred"
+    for l in labels:
+        s += "\t" + l
+    print s
+    for i in range(n):
+        s=labels[i] + "\t"
+        for j in range(n):
+            s += "\t" + str(c[i][j])
+        print s
 
 def process(args):
     global log_to_file
@@ -151,6 +159,7 @@ def process(args):
         logging.basicConfig(stream=sys.stderr, level=logging.INFO)
 
     if (args.command == 'process'):
+        from modeling import process_data
 
         if not args.csv_file:
             args.csv_file = SENSOR_CSV
@@ -159,21 +168,25 @@ def process(args):
         save_data(df, args.data_file)
 
     elif (args.command == 'train'):
+        from modeling import process_data
+        from modeling import train_model
+
         if (args.csv_file):
             df = process_data(args.csv_file)
             save_data(df, args.data_file)
         else:
             df = load_data(args.data_file)
-        model = train_model(df, args.classifier)
-        save_model(model, args.model_file)
+
+        on_model = train_model(df[0], df[1], args.classifier) #aircon is currently ON, predict TURN OFF
+        off_model = train_model(df[2], df[3], args.classifier) #aircon is currently OFF, predict TURN ON
+        save_model([on_model, off_model], args.model_file)
     elif (args.command == 'predict'):
-
-        from sklearn import tree
-        from sklearn.ensemble import RandomForestClassifier
-
-        inputs = parse_sensors(args.sensors)
-        model = load_model(args.model_file)
-        action = predict(model, inputs)
+        status, inputs = parse_sensors(args.sensors)
+        on_model, off_model = load_model(args.model_file)
+        if status == 0:
+            action = predict(off_model, inputs)
+        else:
+            action = predict(on_model, inputs)
         if action==1:
             print "TURN_ON"
         elif action==-1:
@@ -182,12 +195,34 @@ def process(args):
             print "DO_NOTHING"
 
     elif (args.command == 'evaluate'):
+        import modeling
         if (args.csv_file):
-            df = process_data(args.csv_file)
+            df = modeling.process_data(args.csv_file)
         else:
             df = load_data(args.data_file)
-        model = load_model(args.model_file)
-        print evaluate_model(df, model)
+        logging.info("Performance for TURN OFF prediction")
+        con_mats = modeling.evaluate_model(df[0], df[1], args.classifier)
+        fold = 1
+        for c1, c2 in con_mats:
+            print "Prediction performance for fold " + str(fold)
+            print "... on training data"
+            print_confusion_matrix(c1, ("DO-NOTHING", "TURN-OFF"))
+            print "... on testing data"
+            print_confusion_matrix(c2, ("DO-NOTHING", "TURN-OFF"))
+            fold += 1
+
+
+        logging.info("Performance for TURN ON prediction")
+        con_mats =  modeling.evaluate_model(df[2], df[3], args.classifier)
+        fold = 1
+        for c1, c2 in con_mats:
+            print "Prediction performance for fold " + str(fold)
+            print "... on training data"
+            print_confusion_matrix(c1, ("NOTHING", "TURN-ON"))
+            print "... on testing data"
+            print_confusion_matrix(c2, ("NOTHING", "TURN-ON"))
+            fold += 1
+
     elif (args.command == 'reinforce'):
         reinforce()
     else:
@@ -226,8 +261,8 @@ def main():
 
         process(args)
     except EngineError as e:
-        sys.stderr.write("engine error \n")
+        sys.stderr.write("Engine Error: " + str(e) + "\n")
     except Exception as e:
-        sys.stderr.write("unknown exception \n")
+        sys.stderr.write("Internal Error: " + str(e) + "\n")
 
 if __name__ == "__main__" : main()
