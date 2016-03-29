@@ -10,35 +10,38 @@ from sklearn.ensemble import RandomForestClassifier
 #some constants
 
 # data processing and feature extraction parameters
-MIN_LINE_SIZE = 30
-X_NUM_COLS = 7
-NUM_CSV_COLS = 7 #'temp', 'humidity', 'light', 'CO2', 'dust', and time ('hour' and 'day')
-SEP_CHAR = ","
-POWER_CUT = 0.01 #cut value for positive power consumption
-ON_MIN_DURATION = 5 # more than 5 minute on is considered as ON status
-OFF_MIN_DURATION = 5 # more than 5 minutes off is considered as OFF status
-PAST_DURATION = 5 # 5 minutes of past data is used for feature extraction
-SAMPLING_SIZE = 60
+MIN_LINE_SIZE = 30      #minimum length of a data line. Used for guessing the number of data rows
+NUM_FEATURES = 7        #number of features for prediction
+NUM_CSV_COLS = 7        #number of columns in CVS file, plus 1 ('temp', 'humidity', 'light'
+                        # , 'CO2', 'dust', and time ('hour' and 'day'))
+
+SEP_CHAR = ","          #seprating character for csv file
+POWER_CUT = 0.01        #cut value for positive power consumption
+ON_MIN_DURATION = 5     # more than 5 minute on is considered as ON status
+OFF_MIN_DURATION = 5    # more than 5 minutes off is considered as OFF status
+PAST_DURATION = 5       # 5 minutes of past data is used for feature extraction
+SAMPLING_SIZE = 60  #
+
+SENSOR_RANGES=((0, 50),(0,100),(0, 100), (0,2000),(0,100)) #valid ranges of temp, humidity, light, CO2, dust sensors
 
 #air conditioner status labels
-STATUS_ON = 1
-STATUS_OFF = 0
+STATUS_ON = 1           #aircon is ON
+STATUS_OFF = 0          #aircon is OFF
 
 #class labels
-ACTION_NOTHING = 0
-ACTION_TURN_ON = 1
-ACTION_TURN_OFF = 2
+ACTION_NOTHING = 0      #user does nothing
+ACTION_TURN_ON = 1      #user turns on aircon
+ACTION_TURN_OFF = 2     #user turn off aircon
 
 
-#random forest parameters
+#random forest/decision tree parameter
+MIN_SPLIT = 5           #minimum leaf size for spliting
+NUM_TREES = 100         #number of trees to make forest
 
-MIN_SPLIT = 5
-NUM_TREES = 100
+NUM_FOLDS = 3           #number of folds for cross-validation
+NUM_CLASS = 2           #binary classification
 
-NUM_FOLDS = 3
-NUM_CLASS = 2
-
-log_to_file = False
+log_to_file = False     #log message to file?
 
 class EngineError(Exception):
     def __init__(self, msg, details=True):
@@ -79,19 +82,25 @@ def process_data(filename):
                     temp_values[NUM_CSV_COLS-2] = t.weekday()
                     temp_values[NUM_CSV_COLS-1] = t.hour + t.minute/60.0 + t.second/3600.0
 
-                    #get remaining columns
-                    for i in range(1, len(values)):
-                        temp_values[i-1] = float(values[i])
-                    #TODO: remove bad values (outliers)
-                except Exception as e: #pass the ill-format line
-                    logging.warning(e)
-                    pass
-                power[nrows] = temp_values[0]
-                saving_time[nrows] = time.mktime(t.timetuple())
-                for i in range(1, NUM_CSV_COLS-1):
-                    raw_data[nrows, i-1] = temp_values[i]
+                    #get power column
+                    temp_values[0] = float(values[1])
+                    #get reamaining columns (`temp`, `humidity`, `CO2` and `dust`)
+                    for i in range(2, len(values)):
+                        v = float(values[i])
+                        if (v<SENSOR_RANGES[i-2][0]) or (v>SENSOR_RANGES[i-2][1]):
+                            raise ValueError("sensor value is out of range")
+                        temp_values[i-1] = v
 
-                nrows += 1
+                    power[nrows] = temp_values[0]
+                    saving_time[nrows] = time.mktime(t.timetuple())
+                    for i in range(1, NUM_CSV_COLS-1):
+                        raw_data[nrows, i-1] = temp_values[i]
+                    nrows += 1
+
+                except Exception as e: #pass the ill-format line
+                    #logging.warning(e)
+                    pass
+
 
 
     raw_data = np.resize(raw_data,[nrows, NUM_CSV_COLS])
@@ -175,7 +184,7 @@ def process_data(filename):
     n_obs = SAMPLING_SIZE # sampling every 10 timepoints (i.e. 5 minutes)
     nfrows = int(nrows/n_obs) #number of data rows after sampling
 
-    x = np.empty([nfrows, X_NUM_COLS], float)
+    x = np.empty([nfrows, NUM_FEATURES], float)
     y = np.empty(nfrows, int)
     y.fill(ACTION_NOTHING)
     sampled_status = np.empty(nfrows, int)
@@ -206,8 +215,8 @@ def process_data(filename):
                 x[i, j] = np.mean(raw_data[feature_ids, j])
                 #x[i, 2*j] = np.mean(raw_data[feature_ids, j])
                 #x[i, 2*j+1] = np.std(raw_data[feature_ids, j])
-            x[i, X_NUM_COLS-2] = raw_data[sampled_id, NUM_CSV_COLS-2] #week day
-            x[i, X_NUM_COLS-1] = raw_data[sampled_id, NUM_CSV_COLS-1] #hour
+            x[i, NUM_FEATURES-2] = raw_data[sampled_id, NUM_CSV_COLS-2] #week day
+            x[i, NUM_FEATURES-1] = raw_data[sampled_id, NUM_CSV_COLS-1] #hour
             sampled_status[i] = status[sampled_id-1]
             y[i] = action[sampled_id]
             i += 1
@@ -216,7 +225,7 @@ def process_data(filename):
         sampled_id += n_obs
 
     nrows = i
-    x = np.resize(x, [nrows, X_NUM_COLS])
+    x = np.resize(x, [nrows, NUM_FEATURES])
     y = np.resize(y, nrows)
     #sampled_status = np.resize(sampled_status, nrows)
     on_ids = []
