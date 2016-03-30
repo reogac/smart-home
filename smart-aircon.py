@@ -163,29 +163,43 @@ def process(args):
 
         if not args.csv_file:
             args.csv_file = SENSOR_CSV
-
+        #process the raw data
         df = process_data(args.csv_file)
+        #save data to file
         save_data(df, args.data_file)
 
     elif (args.command == 'train'):
         from modeling import process_data
         from modeling import train_model
 
-        if (args.csv_file):
+        if (args.csv_file): #input is csv file
+            #process the raw data
             df = process_data(args.csv_file)
+            #save data to file
             save_data(df, args.data_file)
-        else:
+        else: #input is processed data file
+            #load the processed data
             df = load_data(args.data_file)
 
-        on_model = train_model(df[0], df[1], args.classifier) #aircon is currently ON, predict TURN OFF
-        off_model = train_model(df[2], df[3], args.classifier) #aircon is currently OFF, predict TURN ON
+        #for aircon in ON status, build model to predict TURN OFF action
+        on_model = train_model(df[0], df[1], args.classifier)
+
+        #for aircon in OFF status, build model to predict TURN ON action
+        off_model = train_model(df[2], df[3], args.classifier)
+
+        #save models to file
         save_model([on_model, off_model], args.model_file)
+
     elif (args.command == 'predict'):
+        #parse the input values from sensors
         status, inputs = parse_sensors(args.sensors)
+
+        #load prediction models
         on_model, off_model = load_model(args.model_file)
-        if status == 0:
+
+        if status == 0:     #aircon is OFF, predict TURN ON
             action = predict(off_model, inputs)
-        else:
+        else:               #aircon is ON, predict TURN OFF
             action = predict(on_model, inputs)
         if action==1:
             print "TURN_ON"
@@ -196,12 +210,19 @@ def process(args):
 
     elif (args.command == 'evaluate'):
         import modeling
-        if (args.csv_file):
+
+        if (args.csv_file):     #input is raw data
+            #process raw data
             df = modeling.process_data(args.csv_file)
-        else:
+        else:                   #input is processed data
+            #load processed data
             df = load_data(args.data_file)
         logging.info("Performance for TURN OFF prediction")
+
+        #cross validation evaluation
         con_mats = modeling.evaluate_model(df[0], df[1], args.classifier)
+
+        #report the performance
         fold = 1
         for c1, c2 in con_mats:
             print "Prediction performance for fold " + str(fold)
