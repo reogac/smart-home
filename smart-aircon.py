@@ -225,22 +225,22 @@ def process(args):
         #report the performance
         fold = 1
         for c1, c2 in con_mats:
-            print "Prediction performance for fold " + str(fold)
-            print "... on training data"
+            print "\nPrediction performance for fold " + str(fold)
+            print "\n... on training data"
             print_confusion_matrix(c1, ("DO-NOTHING", "TURN-OFF"))
-            print "... on testing data"
+            print "\n... on testing data"
             print_confusion_matrix(c2, ("DO-NOTHING", "TURN-OFF"))
             fold += 1
 
 
-        logging.info("Performance for TURN ON prediction")
+        logging.info("\n\nPerformance for TURN ON prediction")
         con_mats =  modeling.evaluate_model(df[2], df[3], args.classifier)
         fold = 1
         for c1, c2 in con_mats:
-            print "Prediction performance for fold " + str(fold)
-            print "... on training data"
+            print "\nPrediction performance for fold " + str(fold)
+            print "\n... on training data"
             print_confusion_matrix(c1, ("NOTHING", "TURN-ON"))
-            print "... on testing data"
+            print "\n... on testing data"
             print_confusion_matrix(c2, ("NOTHING", "TURN-ON"))
             fold += 1
 
