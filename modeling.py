@@ -339,6 +339,15 @@ def process_data(filename):
         status[i:i+chunk_nrows] = chunk_status
         i += chunk_nrows
 
+    #separate data into two, regarding to aircon status (ON or OFF)
+    on_ids = []         #list to hold row index for ON status
+    off_ids = []        #list to hold row index for OFF status
+    for i in range(nrows):
+        if status[i] == STATUS_ON:
+            on_ids.append(i)
+        else:
+            off_ids.append(i)
+
     #"""get the number of actions
     cnt1 = 0
     cnt2 = 0
@@ -348,19 +357,10 @@ def process_data(filename):
             cnt1 += 1
         elif y[i] == ACTION_TURN_OFF:
             cnt2 += 1
+    print "There are " + str(cnt1) + " TURN ON in " + str(len(off_ids)) + " observations of aircon OFF status"
+    print "There are " + str(cnt2) + " TURN OFF in " + str(len(on_ids)) + " observations of aircon ON status"
 
-    print "Number of TURN ON actions = " + str(cnt1)
-    print "Number of TURN OFF actions = " + str(cnt2)
     #"""
-
-    #separate data into two, regarding to aircon status (ON or OFF)
-    on_ids = []         #list to hold row index for ON status
-    off_ids = []        #list to hold row index for OFF status
-    for i in range(nrows):
-        if status[i] == STATUS_ON:
-            on_ids.append(i)
-        else:
-            off_ids.append(i)
 
     return [x[on_ids, :], y[on_ids], x[off_ids, :], y[off_ids]]
 

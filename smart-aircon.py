@@ -182,6 +182,19 @@ def process(args):
             #load processed data
             df = load_data(args.data_file)
 
+
+        print "\n\nPerformance for TURN ON prediction"
+
+        con_mats =  modeling.evaluate_model(df[2], df[3], args.classifier)
+        fold = 1
+        for c1, c2 in con_mats:
+            print "\nPrediction performance for fold " + str(fold)
+            print "\n... on training data"
+            print_confusion_matrix(c1, ("NOTHING", "TURN-ON"))
+            print "\n... on testing data"
+            print_confusion_matrix(c2, ("NOTHING", "TURN-ON"))
+            fold += 1
+
         print  "\n\nPerformance for TURN OFF prediction"
 
         #cross validation evaluation
@@ -195,19 +208,6 @@ def process(args):
             print_confusion_matrix(c1, ("DO-NOTHING", "TURN-OFF"))
             print "\n... on testing data"
             print_confusion_matrix(c2, ("DO-NOTHING", "TURN-OFF"))
-            fold += 1
-
-
-        print "\n\nPerformance for TURN ON prediction"
-
-        con_mats =  modeling.evaluate_model(df[2], df[3], args.classifier)
-        fold = 1
-        for c1, c2 in con_mats:
-            print "\nPrediction performance for fold " + str(fold)
-            print "\n... on training data"
-            print_confusion_matrix(c1, ("NOTHING", "TURN-ON"))
-            print "\n... on testing data"
-            print_confusion_matrix(c2, ("NOTHING", "TURN-ON"))
             fold += 1
 
     elif (args.command == 'reinforce'):
