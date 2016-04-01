@@ -17,8 +17,8 @@ SEP_CHAR = ","          #seprating character for csv file
 POWER_CUT = 0.01        #cut value for positive power consumption
 POWER_MIN_NA_CHUNK_LEN = 10   #a chunk of more than 10 continous NA values (-1) for `power` is set to be removed
 POWER_MIN_GOOD_CHUNK_LEN = 20   #a good chunk must have at least 20 observations (10 minutes)
-ON_MIN_DURATION = 15     #more than 5 minute on is considered as ON status
-OFF_MIN_DURATION = 15    #more than 5 minutes off is considered as OFF status
+ON_MIN_DURATION = 10     #more than 5 minute on is considered as ON status
+OFF_MIN_DURATION = 10    #more than 5 minutes off is considered as OFF status
 PAST_DURATION = 5       #5 minutes of past data is used for feature extraction
 SAMPLING_SIZE = 30      #1 for 30 secs, 2 for 1 minutes, 10 for 5 minutes, 60 for 30 minutes and so on...
 
@@ -35,8 +35,8 @@ ACTION_TURN_OFF = 2     #user turn off aircon
 
 
 #random forest/decision tree parameter
-MIN_SPLIT = 5           #minimum leaf size for spliting
-NUM_TREES = 100         #number of trees to make forest
+MIN_SPLIT = 6           #minimum leaf size for spliting
+NUM_TREES = 500         #number of trees to make forest
 
 NUM_FOLDS = 3           #number of folds for cross-validation
 NUM_CLASS = 2           #binary classification
@@ -98,6 +98,8 @@ def read_raw_data(filename):
                     pass
 
 
+    if nrows==0:
+        raise EngineError("File has no data")
     #resize the arrays to their correct sizes
     return np.resize(raw_data,[nrows, NUM_CSV_COLS+2])
 
