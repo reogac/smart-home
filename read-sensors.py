@@ -5,6 +5,8 @@ import time
 import serial
 import Queue
 from datetime import datetime
+import modeling
+
 PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
 SAVING_INTERVAL_NUM = 5
 FW_KEY = "(02)"
