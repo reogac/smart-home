@@ -217,7 +217,8 @@ def process(args):
         else:                   #input is processed data
             #load processed data
             df = load_data(args.data_file)
-        logging.info("Performance for TURN OFF prediction")
+
+        print  "\n\nPerformance for TURN OFF prediction"
 
         #cross validation evaluation
         con_mats = modeling.evaluate_model(df[0], df[1], args.classifier)
@@ -233,7 +234,8 @@ def process(args):
             fold += 1
 
 
-        logging.info("\n\nPerformance for TURN ON prediction")
+        print "\n\nPerformance for TURN ON prediction"
+
         con_mats =  modeling.evaluate_model(df[2], df[3], args.classifier)
         fold = 1
         for c1, c2 in con_mats:
@@ -266,7 +268,7 @@ def main():
                                          usage='%(prog)s command [options]')
         parser.add_argument("command", choices=['process', 'train', 'predict', 'reinforce','evaluate'],
                             help="tell the program what to do")
-        parser.add_argument("-c", "--classifier", choices=['tree', 'forest'], dest="classifier", default="tree",
+        parser.add_argument("-c", "--classifier", choices=['tree', 'forest'], dest="classifier", default="forest",
                             help="Select classification model (Decision tree or Random forest)")
         parser.add_argument("-t", "--csv_file", dest="csv_file",
                             help="file containing the original sensor data, default name = \'" + SENSOR_CSV + "\'")
