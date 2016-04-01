@@ -167,8 +167,8 @@ def process(args):
             action = predict(on_model, inputs)
         if action==1:
             print "TURN_ON"
-        elif action==-1:
-            print "TURN_ON"
+        elif action==2:
+            print "TURN_OFF"
         else:
             print "DO_NOTHING"
 
