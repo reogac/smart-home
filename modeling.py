@@ -35,8 +35,8 @@ ACTION_TURN_OFF = 2     #user turn off aircon
 
 
 #random forest/decision tree parameter
-MIN_SPLIT = 6           #minimum leaf size for spliting
-NUM_TREES = 500         #number of trees to make forest
+MIN_SPLIT = 4           #minimum leaf size for spliting
+NUM_TREES = 100         #number of trees to make forest
 
 NUM_FOLDS = 3           #number of folds for cross-validation
 NUM_CLASS = 2           #binary classification
