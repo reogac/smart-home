@@ -124,7 +124,7 @@ Once the model is trained, the program can make prediction of user action based 
 ```
 where `model-file` is the previously trained model and the `sensor-data` should conform to the format examplified like this:
 ```bash
-"ac_status=1, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2,hour=19.5"
+"power=0, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2,hour=19.5"
 ```
 
 The command return the predicted action of user which can be one of three possible outcomes: `TURN-ON`, `TURN-OFF` or `DO-NOTHING`.
