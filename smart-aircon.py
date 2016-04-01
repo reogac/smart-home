@@ -155,6 +155,9 @@ def process(args):
         save_model([on_model, off_model], args.model_file)
 
     elif (args.command == 'predict'):
+        from modeling import ACTION_TURN_OFF
+        from modeling import ACTION_TURN_ON
+        from modeling import ACTION_NOTHING
         #parse the input values from sensors
         status, inputs = parse_sensors(args.sensors)
 
@@ -165,9 +168,10 @@ def process(args):
             action = predict(off_model, inputs)
         else:               #aircon is ON, predict TURN OFF
             action = predict(on_model, inputs)
-        if action==1:
+
+        if action==ACTION_TURN_ON:
             print "TURN_ON"
-        elif action==2:
+        elif action==ACTION_TURN_OFF:
             print "TURN_OFF"
         else:
             print "DO_NOTHING"
