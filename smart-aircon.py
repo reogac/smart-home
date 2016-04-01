@@ -33,42 +33,6 @@ def save_data(data, filename):
         raise EngineError("Failed to save data")
 
 
-"""def process_data(filename):
-    from datetime import datetime
-    import numpy as np
-    import pandas as pd
-
-    logging.info("load sensor data from \'" + filename + "\'")
-    try:
-        df = pd.read_csv(filename)
-    except Exception as e:
-        logging.error(str(e))
-        raise EngineError("Failed to read csv file")
-    df = df.loc[0:5000,]
-
-    logging.info("pre-processing the data")
-    try:
-        nrows = len(df)
-        # convert string to time object
-        df['time'] = df.time.apply(lambda x: datetime.strptime(x, "%Y-%m-%d %H:%M:%S"))
-        # add two columns to the data frame to represent hour of the the day, and day of the week
-        df['hour'] = df.time.apply(lambda x: x.hour + x.minute/60.0)
-        df['day'] = df.time.apply(lambda x: x.day)
-
-        df['ac_status'] = np.zeros(nrows, int)
-        df.loc[df.power > power_cut, 'ac_status'] = 1
-        df['action'] = np.zeros(nrows, int)
-        for i in range(1, nrows):
-            if (df.ac_status[i] == 1) and (df.ac_status[i-1]) == 0:
-                df.loc[i, 'action'] = 1 #TURN ON
-            elif (df.ac_status[i] == 0) and (df.ac_status[i-1]) == 1:
-                df.loc[i, 'action'] = -1 #TURN OFF
-    except Exception as e:
-        logging.error(str(e))
-        raise EngineError("Failed to process data")
-    return df
-"""
-
 def save_model(model, filename):
     logging.info("save model to \'" + filename + "\'")
     try:

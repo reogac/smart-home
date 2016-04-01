@@ -135,6 +135,19 @@ def get_good_power_chunks(power):
 
 
 def process_chunk(start_id, end_id, raw_data):
+    """This function extracts features and assigns labels from a good chunk of raw data
+    Following step is taken:
+        + determine aircon status from `power`
+        + identify user actions (classification labels) from the aircon status
+        + remove spurious actions (TURN ON, TURN OFF that are too close to each other)
+        + fix aircon status to match with the user actions (after removing spurious ones)
+        + sub-sample and extract data features (outlier samples will be removed)
+
+    @:param raw_data the whole raw data array
+    @:param start_id where the chunk starts
+    @:param end_id where the chunk ends
+    @:return a list of feature array, label vector and aircon status vector
+    """
 
     nrows = end_id - start_id
     saving_time = raw_data[start_id:end_id, 0]
@@ -284,12 +297,13 @@ def process_chunk(start_id, end_id, raw_data):
 def process_data(filename):
     """this function is to read raw sensor data from csv file then do preprocessing to prepare data for model learning.
     It takes these following processing steps:
-        - read data, remove outliers (using specific ranges of sensor values)
-        - convert POSIX time column to `hour` (hour of day) and `weekday` (day of week). Both are features for prediction
-        - assign user actions from `power` (power consumption) values
-        - filter spurious `actions` (actions that happens within a limited time interval)
-        - sub-sampling (increase time interval between observations)
-        - extract features (statistics) from sensor values in a specific past time passage.
+        - read raw data
+        - convert POSIX time column to `hour` (hour of day) and `weekday` (day of week) then add to the data
+        - remove any bad data chunk (consecutive observations of power=-1)
+        - identify data chunks of good quality
+        - assign labels and extract features from these good chunks
+        - merge the output chunks (of previous step)
+        - return the processed data
     @:param the raw data file
     @:return a list of 4 arrays including: 1 feature matrix and 1 label vector for the aircon in ON state,
              1 feature matrix and 1 label vector for the aircon in OFF state
@@ -396,11 +410,10 @@ def evaluate_model(x, y, method):
     @:return a list of confusion matrices (length equals the number of cross-validation folds)
     """
     from sklearn.metrics import confusion_matrix
+    from sklearn.cross_validation import StratifiedKFold
+
     logging.info("evaluate model")
 
-
-
-    from sklearn.cross_validation import StratifiedKFold
     try:
         #first partition data into train and test data
         skf = StratifiedKFold(y, NUM_FOLDS)
