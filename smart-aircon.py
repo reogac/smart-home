@@ -246,7 +246,7 @@ def main():
                             help="file to save/load the prediction model, default name = \'" + MODEL_PICKLE + "\'")
         parser.add_argument("-s", "--sensors", dest="sensors",
                             help="sensor data for which prediction should be made, here is a sample format: "
-                                 "\"ac_status=1, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2, hour=19.5\"")
+                                 "\"power=1.2, temp=37, humidity=50, dust=100, CO2=1000, light=30, day=2, hour=19.5\"")
         parser.add_argument("-l", "--log", dest="log", help="where to save log messages")
         args = parser.parse_args()
 
