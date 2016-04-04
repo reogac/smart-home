@@ -1,17 +1,28 @@
-#!/usr/bin/python
-
-import threading
+from threading import Thread
 import time
 import serial
 import Queue
 from datetime import datetime
-import modeling
-
 PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
 SAVING_INTERVAL_NUM = 5
 FW_KEY = "(02)"
-class ReaderWriter(threading.Thread):
-    def __init__(self, data, key):
+
+class CommandSender(Thread):
+    def __init__(self, command):
+        self.command = command
+        self.alive = True
+        Thread.__init__(self)
+
+    def run(self):
+        while self.alive:
+            self.command.put(1)
+            time.sleep(PROBING_INTERVAL)
+    def set_kill(self):
+        print "kill command sender thread"
+        self.alive = False
+
+class ReaderWriter(Thread):
+    def __init__(self, command, data):
         self.port = serial.Serial(
                     port='/dev/ttyO2',
                     baudrate=9600, timeout=0,
@@ -22,17 +33,18 @@ class ReaderWriter(threading.Thread):
         print self.port.isOpen()
         self.alive = True
         self.queue = data
-        self.key = key
-        threading.Thread.__init__(self)
+        self.command = command
+        Thread.__init__(self)
 
     def run(self):
         self.port.flush() #clearing input buffer
         bf = ""
         while (self.alive):
-            #Tell the port that I want more data
-            self.port.write(self.key)
-            print "write"
-
+            c = self.command.get()
+            if c==1:
+                #Tell the port that I want more data
+                self.port.write(FW_KEY)
+                print "write"
             while self.port.inWaiting():
                 bf += self.port.read()
             l = len(bf)
@@ -42,12 +54,11 @@ class ReaderWriter(threading.Thread):
                 bf = bf[32:]
             else:
                 print "got this: " + bf
-            time.sleep(PROBING_INTERVAL)
 
         self.port.close()
 
-    def set_stop(self):
-        print "kill it"
+    def set_kill(self):
+        print "kill reader-writer thread"
         self.alive = False
  
 def parse_data(data):
@@ -63,15 +74,25 @@ def parse_data(data):
         print e
 
 
-data = Queue.Queue()
-rw = ReaderWriter(data, FW_KEY)
+data = Queue.Queue(100)
+command = Queue.Queue(100)
+cs = CommandSender(command)
+rw = ReaderWriter(command, data)
 rw.start()
+cs.start()
+
 
 while True:
     try:
-        msg = data.get()
+        msg = data.get(timeout=1)       
         sensors = parse_data(msg)
     except (KeyboardInterrupt, SystemExit):
-        rw.set_stop()
+        print "interupted"
+        rw.set_kill()
+        time.sleep(1)
+        cs.set_kill()
         break
+    except Queue.Empty as e:
+        print "pass the empty queue exception"
+        pass
 
