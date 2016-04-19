@@ -11,6 +11,19 @@ FW_KEY = "(02)"
 NUM_SENSORS = 5
 AMBIENT_SENSORS = 1
 
+def parse_data(data):
+    sensors={}
+    try:
+        sensors["dust"] = 0.01*int(data[10:15])
+        sensors["temp"] = 0.1*int(data[17:21])
+        sensors["humidity"] = int(data[23:26])
+        sensors["light"] = int(data[28:31])
+        sensors["time"] = str(datetime.now())
+        print sensors
+    except ValueError as e:
+        print e
+
+
 class MyThread(Thread):
     def __init__(self, my_name):
         self.alive = True
@@ -68,49 +81,40 @@ class ReaderWriter(MyThread):
 
 
 class Predictor(MyThread):
-    def __init__(self):
-        self.data = Queue.Queue(100)
-        command = Queue.Queue(100)
-        self.command_sender = CommandSender(command)
-        self.port_reader_writer = ReaderWriter(command, self.data)
+    def __init__(self, input_queue):
+        self.input_queue = input_queue
         MyThread.__init__(self, "Predictor thread")
 
-    def parse_data(self, data):
-        sensors={}
-        try:
-            sensors["dust"] = 0.01*int(data[10:15])
-            sensors["temp"] = 0.1*int(data[17:21])
-            sensors["humidity"] = int(data[23:26])
-            sensors["light"] = int(data[28:31])
-            sensors["time"] = str(datetime.now())
-            print sensors
-        except ValueError as e:
-            print e
-
     def run(self):
-        self.command_sender.start()
-        self.port_reader_writer.start()
-
         while self.alive:
             try:
-                msg = self.data.get(timeout=1)
-                sensors = self.parse_data(msg)
+                sensors = self.input_queue.get(timeout=1)
+                #now make a prediction
+                print sensors
             except Queue.Empty as e:
                 print "pass the empty queue exception"
                 pass
-            except (KeyboardInterrupt, SystemExit):
-                print "interrupt"
-                self.set_kill()
 
-        self.command_sender.set_kill()
+
+
+sensor_data = Queue.Queue(100) #queue to get sensor data
+port_command = Queue.Queue(100) #queue of commands to be sent to port
+command_sender = CommandSender(port_command) #port command sender thread
+port_reader_writer = ReaderWriter(port_command, sensor_data) #port read/write thread
+pred_input = Queue(100)
+pred = Predictor(pred_input) #prediction thread
+
+
+command_sender.start()
+port_reader_writer.start()
+pred.start()
+while True:
+    try:
+        data = sensor_data.get(timeout=1)
+        pred_input.put(parse_data(data))
+    except (KeyboardInterrupt, SystemExit):
+        pred.set_kill()
+        command_sender.set_kill()
         time.sleep(1)
-        self.port_reader_writer.set_kill()
-
-pred = Predictor()
-try:
-    pred.start()
-    pred.join()
-except (KeyboardInterrupt, SystemExit):
-    print "got it"
-    pred.set_kill()	
-
+        port_reader_writer.set_kill()
+        break
