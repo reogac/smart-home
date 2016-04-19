@@ -24,7 +24,7 @@ class MyThread(Thread):
 class CommandSender(MyThread):
     def __init__(self, command):
         self.command = command
-        MyThread.__init__(self)
+        MyThread.__init__(self, "Command sender thread")
 
     def run(self):
         while self.alive:
@@ -43,7 +43,7 @@ class ReaderWriter(MyThread):
         print self.port.isOpen()
         self.queue = data
         self.command = command
-        MyThread.__init__(self)
+        MyThread.__init__(self, "Port reader writer thread")
 
     def run(self):
         self.port.flush() #clearing input buffer
@@ -73,9 +73,9 @@ class Predictor(MyThread):
         command = Queue.Queue(100)
         self.command_sender = CommandSender(command)
         self.port_reader_writer = ReaderWriter(command, self.data)
-        MyThread.__init(self)
+        MyThread.__init__(self, "Predictor thread")
 
-    def parse_data(data):
+    def parse_data(self, data):
         sensors={}
         try:
             sensors["dust"] = 0.01*int(data[10:15])
@@ -86,6 +86,7 @@ class Predictor(MyThread):
             print sensors
         except ValueError as e:
             print e
+
     def run(self):
         self.command_sender.start()
         self.port_reader_writer.start()
@@ -94,20 +95,22 @@ class Predictor(MyThread):
             try:
                 msg = self.data.get(timeout=1)
                 sensors = self.parse_data(msg)
-
-            except (KeyboardInterrupt, SystemExit):
-                print "interupted"
-                self.command_sender.set_kill()
-                time.sleep(1)
-                self.port_reader_writer.set_kill()
-                break
             except Queue.Empty as e:
                 print "pass the empty queue exception"
                 pass
+            except (KeyboardInterrupt, SystemExit):
+                print "interrupt"
+                self.set_kill()
 
+        self.command_sender.set_kill()
+        time.sleep(1)
+        self.port_reader_writer.set_kill()
 
 pred = Predictor()
-pred.start()
-pred.join()
-
+try:
+    pred.start()
+    pred.join()
+except (KeyboardInterrupt, SystemExit):
+    print "got it"
+    pred.set_kill()	
 
