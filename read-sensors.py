@@ -11,8 +11,8 @@ FW_KEY = "(02)"
 NUM_SENSORS = 5
 AMBIENT_SENSORS = 1
 
-class MyThread(Thread, my_name):
-    def __init__(self, name):
+class MyThread(Thread):
+    def __init__(self, my_name):
         self.alive = True
         self.my_name = my_name
         Thread.__init__(self)
