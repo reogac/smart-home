@@ -49,11 +49,12 @@ class ReaderWriter(MyThread):
                 bf += self.port.read()
             l = len(bf)
             if (l >= 32) :
-                print bf
+
                 self.queue.put(bf[0:32])
                 bf = bf[32:]
             else:
-                print "got this: " + bf
+                #print "got this: " + bf
+                pass
             time.sleep(PROBING_INTERVAL)
         self.port.close()
         print self.my_name + " says BYE"
@@ -71,6 +72,7 @@ class Predictor:
         current_time = datetime.now()
         time_diff = current_time - self.last_prediction_time
         if time_diff.total_seconds() >= PREDICTION_INTERVAL:
+            print "Make a prediction with inputs = " + str(self.input)
             #make a prediciton here
             if data["power"] > 0.0:
                 pred_label = self.on_model.predict(self.input)
@@ -97,7 +99,7 @@ class SensorDataManager:
         current_time = datetime.now()
         time_diff = current_time - self.last_saving_time
         if time_diff.total_seconds() >= SAVING_INTERVAL:
-            print "collecting data"
+            print "collecting data: " + str(data)
             self.buffer.append(data)
             self.last_saving_time = current_time
 
@@ -106,8 +108,8 @@ class SensorDataManager:
             self.flush()
 
     def flush(self): #save data to disk
-        print "write data to disk"
-        with open(SENSOR_DATA_FILE_NAME, "wt") as f:
+        print "dump data to disk"
+        with open(SENSOR_DATA_FILE_NAME, "a") as f:
             for data in self.buffer:
                 f.write(str(data["time"])+","+str(data["power"])+","
                         + str(data["temp"])+","+str(data["humidity"])+","
@@ -133,8 +135,6 @@ class Framework:
             sensors["light"] = int(data[28:31])
             sensors["CO2"] = 50
             sensors["power"] = 1.0
-
-            print sensors
         except ValueError as e:
             print e
 
