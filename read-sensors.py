@@ -6,23 +6,12 @@ from datetime import datetime
 import numpy as np
 
 PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
-SAVING_INTERVAL_NUM = 5
+SAVING_INTERVAL = 5
 FW_KEY = "(02)"
 NUM_SENSORS = 5
-AMBIENT_SENSORS = 1
-
-def parse_data(data):
-    sensors={}
-    try:
-        sensors["dust"] = 0.01*int(data[10:15])
-        sensors["temp"] = 0.1*int(data[17:21])
-        sensors["humidity"] = int(data[23:26])
-        sensors["light"] = int(data[28:31])
-        sensors["time"] = str(datetime.now())
-        print sensors
-    except ValueError as e:
-        print e
-    return sensors
+PREDICTION_INTERVAL = 6
+SENSOR_DATA_BUFFER_SIZE = 100
+SENSOR_DATA_FILE_NAME = "sensor-data.csv"
 
 class MyThread(Thread):
     def __init__(self, my_name):
@@ -68,49 +57,75 @@ class ReaderWriter(MyThread):
         print self.my_name + " says BYE"
 
 
-class Predictor(MyThread):
-    def __init__(self, input_queue):
-        self.input_queue = input_queue
+class Predictor:
+    def __init__(self):
+        self.last_prediction_time = datetime.now()
         MyThread.__init__(self, "Predictor")
 
-    def run(self):
-        while self.alive:
-            try:
-                sensors = self.input_queue.get(timeout=1)
-                #now make a prediction
-                print "predict this: " + str(sensors)
-            except Queue.Empty as e:
-                pass
+    def handle_data(self, data):
+        current_time = datetime.now()
+        if (current_time - self.last_prediction_time) >= PREDICTION_INTERVAL:
+            #make a prediciton here
+            print "Make a prediction"
+            self.last_prediction_time = current_time
 
-        print self.my_name + " says BYE"
 
 class SensorDataManager:
     def __init__(self):
-        pass
+        self.last_saving_time = datetime.now()
+        self.buffer=[]
+
     def handle_data(self, data):
-        #store data?
-        #preprocess?
-        #prepare
-        pass
+        current_time = datetime.now()
+        if (current_time - self.last_saving_time) >= SAVING_INTERVAL:
+            print "collecting data"
+            self.buffer.append(data)
+            self.last_saving_time = current_time
+
+    def save(self):
+        if len(self.buffer) >= SENSOR_DATA_BUFFER_SIZE:
+            self.flush()
+
+    def flush(self): #save data to disk
+        print "write data to disk"
+        with open(SENSOR_DATA_FILE_NAME, "wt") as f:
+            for data in self.buffer:
+                f.write(str(data))
+        self.buffer = []
 
 
 class Framework:
     def __init__(self):
         self.sensor_data = Queue.Queue(100) #queue to get sensor data
-        self.pred_input = Queue.Queue(100) #queue of prediction inputs
 
         self.port_reader_writer = ReaderWriter(self.sensor_data) #port read/write thread
-        self.pred = Predictor(self.pred_input) #prediction thread
+        self.pred = Predictor() #prediction thread
+        self.data_manager = SensorDataManager()
+
+    def parse_sensor_data(data):
+        sensors={}
+        try:
+            sensors["time"] = str(datetime.now())
+            sensors["dust"] = 0.01*int(data[10:15])
+            sensors["temp"] = 0.1*int(data[17:21])
+            sensors["humidity"] = int(data[23:26])
+            sensors["light"] = int(data[28:31])
+            print sensors
+        except ValueError as e:
+            print e
+
+        return sensors
 
     def run(self):
         self.port_reader_writer.start()
         self.pred.start()
-
         while True:
-            print "hahah"
             try:
                 data = self.sensor_data.get(timeout=PROBING_INTERVAL)
-                self.pred_input.put(parse_data(data))
+                data = self.parse_sensor_data(data)
+                self.data_manager.handle_data(data) #save data to disk
+                self.predictor.handle_data(data) #make prediction
+
             except (KeyboardInterrupt, SystemExit):
                 print "user interupt"
                 self.pred.set_kill() #kill this thread first
