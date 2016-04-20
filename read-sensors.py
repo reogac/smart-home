@@ -34,19 +34,8 @@ class MyThread(Thread):
         print "kill " + self.my_name + " thread!"
         self.alive = False
 
-class CommandSender(MyThread):
-    def __init__(self, command):
-        self.command = command
-        MyThread.__init__(self, "Command sender")
-
-    def run(self):
-        while self.alive:
-            self.command.put(AMBIENT_SENSORS)
-            time.sleep(PROBING_INTERVAL)
-        print self.my_name + " says BYE"
-
 class ReaderWriter(MyThread):
-    def __init__(self, command, data):
+    def __init__(self, data):
         self.port = serial.Serial(
                     port='/dev/ttyO2',
                     baudrate=9600, timeout=0,
@@ -54,19 +43,16 @@ class ReaderWriter(MyThread):
                     stopbits=serial.STOPBITS_ONE,
                     bytesize=serial.EIGHTBITS
                     )
-        print self.port.isOpen()
         self.queue = data
-        self.command = command
         MyThread.__init__(self, "Port reader/writer")
 
     def run(self):
         self.port.flush() #clearing input buffer
         bf = ""
         while self.alive:
-            c = self.command.get()
-            if c==AMBIENT_SENSORS:
-                #Tell the port that I want more data
-                self.port.write(FW_KEY)
+
+            #Tell the port that I want more data
+            self.port.write(FW_KEY)
 
             while self.port.inWaiting():
                 bf += self.port.read()
@@ -77,7 +63,7 @@ class ReaderWriter(MyThread):
                 bf = bf[32:]
             else:
                 print "got this: " + bf
-
+            time.sleep(PROBING_INTERVAL)
         self.port.close()
         print self.my_name + " says BYE"
 
@@ -101,7 +87,7 @@ class Predictor(MyThread):
 class SensorDataManager:
     def __init__(self):
         pass
-    def handle_data(selfdata):
+    def handle_data(self, data):
         #store data?
         #preprocess?
         #prepare
@@ -111,13 +97,12 @@ class SensorDataManager:
 class Framework:
     def __init__(self):
         self.sensor_data = Queue.Queue(100) #queue to get sensor data
-        self.port_command = Queue.Queue(100) #queue of commands to be sent to port
-        self.command_sender = CommandSender(self.port_command) #port command sender thread
-        self.port_reader_writer = ReaderWriter(self.port_command, self.sensor_data) #port read/write thread
-        self.pred_input = Queue.Queue(100)
+        self.pred_input = Queue.Queue(100) #queue of prediction inputs
+
+        self.port_reader_writer = ReaderWriter(self.sensor_data) #port read/write thread
         self.pred = Predictor(self.pred_input) #prediction thread
+
     def run(self):
-        self.command_sender.start()
         self.port_reader_writer.start()
         self.pred.start()
 
@@ -130,8 +115,6 @@ class Framework:
                 print "user interupt"
                 self.pred.set_kill() #kill this thread first
                 self.port_reader_writer.set_kill() #must be killed before the command sender thread
-                time.sleep(1)
-                self.command_sender.set_kill()
                 break
             except Queue.Empty as e:
                 pass
