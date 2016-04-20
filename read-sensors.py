@@ -61,7 +61,7 @@ class ReaderWriter(MyThread):
 
 
 class Predictor:
-    PREDICTORS = ('temp', 'humidity', 'light', 'co2', 'dust')
+    PREDICTORS = ('temp', 'humidity', 'light', 'CO2', 'dust')
     NUM_FEATURES = 7
     def __init__(self):
         self.last_prediction_time = datetime.now()
