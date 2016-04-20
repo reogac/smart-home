@@ -60,7 +60,6 @@ class ReaderWriter(MyThread):
 class Predictor:
     def __init__(self):
         self.last_prediction_time = datetime.now()
-        MyThread.__init__(self, "Predictor")
 
     def handle_data(self, data):
         current_time = datetime.now()
@@ -102,7 +101,7 @@ class Framework:
         self.pred = Predictor() #prediction thread
         self.data_manager = SensorDataManager()
 
-    def parse_sensor_data(data):
+    def parse_sensor_data(self, data):
         sensors={}
         try:
             sensors["time"] = str(datetime.now())
@@ -118,7 +117,6 @@ class Framework:
 
     def run(self):
         self.port_reader_writer.start()
-        self.pred.start()
         while True:
             try:
                 data = self.sensor_data.get(timeout=PROBING_INTERVAL)
