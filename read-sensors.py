@@ -112,10 +112,10 @@ class Framework:
     def __init__(self):
         self.sensor_data = Queue.Queue(100) #queue to get sensor data
         self.port_command = Queue.Queue(100) #queue of commands to be sent to port
-        self.command_sender = CommandSender(port_command) #port command sender thread
-        self.port_reader_writer = ReaderWriter(port_command, sensor_data) #port read/write thread
+        self.command_sender = CommandSender(self.port_command) #port command sender thread
+        self.port_reader_writer = ReaderWriter(self.port_command, self.sensor_data) #port read/write thread
         self.pred_input = Queue.Queue(100)
-        self.pred = Predictor(pred_input) #prediction thread
+        self.pred = Predictor(self.pred_input) #prediction thread
     def run(self):
         self.command_sender.start()
         self.port_reader_writer.start()
