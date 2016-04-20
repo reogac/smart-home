@@ -10,7 +10,7 @@ SAVING_INTERVAL = 5
 FW_KEY = "(02)"
 NUM_SENSORS = 5
 PREDICTION_INTERVAL = 6
-SENSOR_DATA_BUFFER_SIZE = 100
+SENSOR_DATA_BUFFER_SIZE = 10
 SENSOR_DATA_FILE_NAME = "sensor-data.csv"
 
 class MyThread(Thread):
@@ -128,6 +128,7 @@ class Framework:
 
             except (KeyboardInterrupt, SystemExit):
                 print "user interupt"
+                self.data_manager.flush()
                 self.predictor.set_kill() #kill this thread first
                 self.port_reader_writer.set_kill() #must be killed before the command sender thread
                 break
