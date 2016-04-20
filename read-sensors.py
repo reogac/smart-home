@@ -1,3 +1,5 @@
+#!/usr/bin/python
+
 from threading import Thread
 import time
 import serial
@@ -7,10 +9,10 @@ import pickle as pk
 import numpy as np
 
 PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
-SAVING_INTERVAL = 30
+SAVING_INTERVAL = 300 
 FW_KEY = "(02)"
 NUM_SENSORS = 5
-PREDICTION_INTERVAL = 60
+PREDICTION_INTERVAL = 600
 SENSOR_DATA_BUFFER_SIZE = 10
 SENSOR_DATA_FILE_NAME = "sensor-raw-data.csv"
 MODEL_FILE_NAME = "model.pk"
@@ -99,7 +101,8 @@ class SensorDataManager:
         self.last_saving_time = datetime.now()
         self.buffer=[]
         with open(SENSOR_DATA_FILE_NAME, "w") as f:
-            f.write("time,power,temp,humidity,light,CO2,dust\n")
+            #f.write("time,power,temp,humidity,light,CO2,dust\n")
+            f.write("time,temp,humidity,light,dust\n")
 
     def handle_data(self, data):
         current_time = datetime.now()
@@ -117,9 +120,12 @@ class SensorDataManager:
         print "dump data to disk"
         with open(SENSOR_DATA_FILE_NAME, "a") as f:
             for data in self.buffer:
-                f.write(str(data["time"])+","+str(data["power"])+","
-                        + str(data["temp"])+","+str(data["humidity"])+","
-                        + str(data["CO2"])+","+str(data["dust"]) + "\n")
+                #f.write(str(data["time"])+","+str(data["power"])+","
+                #        + str(data["temp"])+","+str(data["humidity"])+","
+                #        + str(data["light"]) + "," + str(data["CO2"])+","+str(data["dust"]) + "\n")
+                f.write(str(data["time"]) + str(data["temp"])+","+str(data["humidity"])+","
+                        + str(data["light"]) + "," + str(data["dust"]) + "\n")
+
         self.buffer = []
 
 
