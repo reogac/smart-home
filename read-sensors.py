@@ -63,7 +63,8 @@ class Predictor:
 
     def handle_data(self, data):
         current_time = datetime.now()
-        if (current_time - self.last_prediction_time) >= PREDICTION_INTERVAL:
+        time_diff = current_time - self.last_prediction_time
+        if time_diff.total_seconds() >= PREDICTION_INTERVAL:
             #make a prediciton here
             print "Make a prediction"
             self.last_prediction_time = current_time
@@ -76,7 +77,8 @@ class SensorDataManager:
 
     def handle_data(self, data):
         current_time = datetime.now()
-        if (current_time - self.last_saving_time) >= SAVING_INTERVAL:
+        time_diff = current_time - self.last_saving_time
+        if time_diff.total_seconds() >= SAVING_INTERVAL:
             print "collecting data"
             self.buffer.append(data)
             self.last_saving_time = current_time
@@ -98,7 +100,7 @@ class Framework:
         self.sensor_data = Queue.Queue(100) #queue to get sensor data
 
         self.port_reader_writer = ReaderWriter(self.sensor_data) #port read/write thread
-        self.pred = Predictor() #prediction thread
+        self.predictor = Predictor() #prediction thread
         self.data_manager = SensorDataManager()
 
     def parse_sensor_data(self, data):
@@ -126,7 +128,7 @@ class Framework:
 
             except (KeyboardInterrupt, SystemExit):
                 print "user interupt"
-                self.pred.set_kill() #kill this thread first
+                self.predictor.set_kill() #kill this thread first
                 self.port_reader_writer.set_kill() #must be killed before the command sender thread
                 break
             except Queue.Empty as e:
