@@ -22,7 +22,7 @@ def parse_data(data):
         print sensors
     except ValueError as e:
         print e
-
+    return sensors
 
 class MyThread(Thread):
     def __init__(self, my_name):
@@ -37,12 +37,13 @@ class MyThread(Thread):
 class CommandSender(MyThread):
     def __init__(self, command):
         self.command = command
-        MyThread.__init__(self, "Command sender thread")
+        MyThread.__init__(self, "Command sender")
 
     def run(self):
         while self.alive:
             self.command.put(AMBIENT_SENSORS)
             time.sleep(PROBING_INTERVAL)
+        print self.my_name + " says BYE"
 
 class ReaderWriter(MyThread):
     def __init__(self, command, data):
@@ -56,12 +57,12 @@ class ReaderWriter(MyThread):
         print self.port.isOpen()
         self.queue = data
         self.command = command
-        MyThread.__init__(self, "Port reader writer thread")
+        MyThread.__init__(self, "Port reader/writer")
 
     def run(self):
         self.port.flush() #clearing input buffer
         bf = ""
-        while (self.alive):
+        while self.alive:
             c = self.command.get()
             if c==AMBIENT_SENSORS:
                 #Tell the port that I want more data
@@ -78,43 +79,54 @@ class ReaderWriter(MyThread):
                 print "got this: " + bf
 
         self.port.close()
+        print self.my_name + " says BYE"
 
 
 class Predictor(MyThread):
     def __init__(self, input_queue):
         self.input_queue = input_queue
-        MyThread.__init__(self, "Predictor thread")
+        MyThread.__init__(self, "Predictor")
 
     def run(self):
         while self.alive:
             try:
                 sensors = self.input_queue.get(timeout=1)
                 #now make a prediction
-                print sensors
+                print "predict this: " + str(sensors)
             except Queue.Empty as e:
-                print "pass the empty queue exception"
                 pass
 
+        print self.my_name + " says BYE"
 
 
 sensor_data = Queue.Queue(100) #queue to get sensor data
 port_command = Queue.Queue(100) #queue of commands to be sent to port
 command_sender = CommandSender(port_command) #port command sender thread
 port_reader_writer = ReaderWriter(port_command, sensor_data) #port read/write thread
-pred_input = Queue(100)
+pred_input = Queue.Queue(100)
 pred = Predictor(pred_input) #prediction thread
 
 
 command_sender.start()
 port_reader_writer.start()
 pred.start()
-while True:
+
+alive = True
+while alive:
+    print "hahah"
     try:
         data = sensor_data.get(timeout=1)
         pred_input.put(parse_data(data))
     except (KeyboardInterrupt, SystemExit):
+        print "hello"
         pred.set_kill()
         port_reader_writer.set_kill()
         time.sleep(1)
         command_sender.set_kill()
         break
+        alive = False
+        print "quit"
+        pass
+    except Queue.Empty as e:
+        pass
+print "say heloo again"
