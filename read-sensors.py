@@ -114,7 +114,7 @@ while True:
         pred_input.put(parse_data(data))
     except (KeyboardInterrupt, SystemExit):
         pred.set_kill()
-        command_sender.set_kill()
-        time.sleep(1)
         port_reader_writer.set_kill()
+        time.sleep(1)
+        command_sender.set_kill()
         break
