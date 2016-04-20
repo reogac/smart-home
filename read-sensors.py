@@ -72,7 +72,7 @@ class Predictor:
         current_time = datetime.now()
         time_diff = current_time - self.last_prediction_time
         if time_diff.total_seconds() >= PREDICTION_INTERVAL:
-            for i in range(Predictor.PREDICTORS):
+            for i in range(len(Predictor.PREDICTORS)):
                 self.input[i] = data[Predictor.PREDICTORS[i]]
             pred_time = data["time"]
             self.input[Predictor.NUM_FEATURES-2] = pred_time.weekday()
