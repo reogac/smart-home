@@ -100,7 +100,7 @@ class Framework:
         self.sensor_data = Queue.Queue(100) #queue to get sensor data
 
         self.port_reader_writer = ReaderWriter(self.sensor_data) #port read/write thread
-        self.predictor = Predictor() #prediction thread
+        self.predictor = Predictor() #predictor
         self.data_manager = SensorDataManager()
 
     def parse_sensor_data(self, data):
@@ -129,7 +129,6 @@ class Framework:
             except (KeyboardInterrupt, SystemExit):
                 print "user interupt"
                 self.data_manager.flush()
-                self.predictor.set_kill() #kill this thread first
                 self.port_reader_writer.set_kill() #must be killed before the command sender thread
                 break
             except Queue.Empty as e:
