@@ -10,7 +10,7 @@ PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
 SAVING_INTERVAL = 5
 FW_KEY = "(02)"
 NUM_SENSORS = 5
-PREDICTION_INTERVAL = 6
+PREDICTION_INTERVAL = 15
 SENSOR_DATA_BUFFER_SIZE = 10
 SENSOR_DATA_FILE_NAME = "sensor-raw-data.csv"
 MODEL_FILE_NAME = "model.pk"
@@ -72,6 +72,12 @@ class Predictor:
         current_time = datetime.now()
         time_diff = current_time - self.last_prediction_time
         if time_diff.total_seconds() >= PREDICTION_INTERVAL:
+            for i in range(Predictor.PREDICTORS):
+                self.input[i] = data[Predictor.PREDICTORS[i]]
+            pred_time = data["time"]
+            self.input[Predictor.NUM_FEATURES-2] = pred_time.weekday()
+            self.input[Predictor.NUM_FEATURES-2] = pred_time.hour + pred_time.minute/60.0 + pred_time.second/3600.0
+
             print "Make a prediction with inputs = " + str(self.input)
             #make a prediciton here
             if data["power"] > 0.0:
