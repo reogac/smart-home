@@ -67,7 +67,7 @@ class ReaderWriter(MyThread):
             if c==AMBIENT_SENSORS:
                 #Tell the port that I want more data
                 self.port.write(FW_KEY)
-                print "write"
+
             while self.port.inWaiting():
                 bf += self.port.read()
             l = len(bf)
@@ -98,35 +98,46 @@ class Predictor(MyThread):
 
         print self.my_name + " says BYE"
 
-
-sensor_data = Queue.Queue(100) #queue to get sensor data
-port_command = Queue.Queue(100) #queue of commands to be sent to port
-command_sender = CommandSender(port_command) #port command sender thread
-port_reader_writer = ReaderWriter(port_command, sensor_data) #port read/write thread
-pred_input = Queue.Queue(100)
-pred = Predictor(pred_input) #prediction thread
-
-
-command_sender.start()
-port_reader_writer.start()
-pred.start()
-
-alive = True
-while alive:
-    print "hahah"
-    try:
-        data = sensor_data.get(timeout=1)
-        pred_input.put(parse_data(data))
-    except (KeyboardInterrupt, SystemExit):
-        print "hello"
-        pred.set_kill()
-        port_reader_writer.set_kill()
-        time.sleep(1)
-        command_sender.set_kill()
-        break
-        alive = False
-        print "quit"
+class SensorDataManager:
+    def __init__(self):
         pass
-    except Queue.Empty as e:
+    def handle_data(selfdata):
+        #store data?
+        #preprocess?
+        #prepare
         pass
-print "say heloo again"
+
+
+class Framework:
+    def __init__(self):
+        self.sensor_data = Queue.Queue(100) #queue to get sensor data
+        self.port_command = Queue.Queue(100) #queue of commands to be sent to port
+        self.command_sender = CommandSender(port_command) #port command sender thread
+        self.port_reader_writer = ReaderWriter(port_command, sensor_data) #port read/write thread
+        self.pred_input = Queue.Queue(100)
+        self.pred = Predictor(pred_input) #prediction thread
+    def run(self):
+        self.command_sender.start()
+        self.port_reader_writer.start()
+        self.pred.start()
+
+        while True:
+            print "hahah"
+            try:
+                data = self.sensor_data.get(timeout=PROBING_INTERVAL)
+                self.pred_input.put(parse_data(data))
+            except (KeyboardInterrupt, SystemExit):
+                print "user interupt"
+                self.pred.set_kill() #kill this thread first
+                self.port_reader_writer.set_kill() #must be killed before the command sender thread
+                time.sleep(1)
+                self.command_sender.set_kill()
+                break
+            except Queue.Empty as e:
+                pass
+
+        print "BYE"
+
+
+framework = Framework()
+framework.run()
