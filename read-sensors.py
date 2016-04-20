@@ -90,8 +90,8 @@ class SensorDataManager:
     def __init__(self):
         self.last_saving_time = datetime.now()
         self.buffer=[]
-        with open(SENSOR_DATA_FILE_NAME, "wt") as f:
-            f.write("time,power,temp,humidity,light,CO2,dust")
+        with open(SENSOR_DATA_FILE_NAME, "a") as f:
+            f.write("time,power,temp,humidity,light,CO2,dust\n")
 
     def handle_data(self, data):
         current_time = datetime.now()
@@ -111,7 +111,7 @@ class SensorDataManager:
             for data in self.buffer:
                 f.write(str(data["time"])+","+str(data["power"])+","
                         + str(data["temp"])+","+str(data["humidity"])+","
-                        + str(data["CO2"])+","+str(data["dust"]))
+                        + str(data["CO2"])+","+str(data["dust"]) + "\n")
         self.buffer = []
 
 
