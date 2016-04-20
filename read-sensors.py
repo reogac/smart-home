@@ -3,6 +3,7 @@ import time
 import serial
 import Queue
 from datetime import datetime
+import pickle as pk
 import numpy as np
 
 PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
@@ -11,7 +12,8 @@ FW_KEY = "(02)"
 NUM_SENSORS = 5
 PREDICTION_INTERVAL = 6
 SENSOR_DATA_BUFFER_SIZE = 10
-SENSOR_DATA_FILE_NAME = "sensor-data.csv"
+SENSOR_DATA_FILE_NAME = "sensor-raw-data.csv"
+MODEL_FILE_NAME = "model.pk"
 
 class MyThread(Thread):
     def __init__(self, my_name):
@@ -58,15 +60,29 @@ class ReaderWriter(MyThread):
 
 
 class Predictor:
+    PREDICTORS = ('temp', 'humidity', 'light', 'co2', 'dust')
+    NUM_FEATURES = 7
     def __init__(self):
         self.last_prediction_time = datetime.now()
+        self.on_model, self.off_model = pk.load(open(MODEL_FILE_NAME, 'rb'))
+        self.input = np.zeros(Predictor.NUM_FEATURES, float)
 
     def handle_data(self, data):
         current_time = datetime.now()
         time_diff = current_time - self.last_prediction_time
         if time_diff.total_seconds() >= PREDICTION_INTERVAL:
             #make a prediciton here
-            print "Make a prediction"
+            if data["power"] > 0.0:
+                pred_label = self.on_model.predict(self.input)
+            else:
+                pred_label = self.off_model.predict(self.input)
+            if pred_label == 0:
+                print "DO_NOTHING"
+            elif pred_label == 1:
+                print "TURN_ON"
+            else:
+                print "TURN_OFF"
+
             self.last_prediction_time = current_time
 
 
@@ -74,6 +90,8 @@ class SensorDataManager:
     def __init__(self):
         self.last_saving_time = datetime.now()
         self.buffer=[]
+        with open(SENSOR_DATA_FILE_NAME, "wt") as f:
+            f.write("time,power,temp,humidity,light,CO2,dust")
 
     def handle_data(self, data):
         current_time = datetime.now()
@@ -91,7 +109,9 @@ class SensorDataManager:
         print "write data to disk"
         with open(SENSOR_DATA_FILE_NAME, "wt") as f:
             for data in self.buffer:
-                f.write(str(data))
+                f.write(str(data["time"])+","+str(data["power"])+","
+                        + str(data["temp"])+","+str(data["humidity"])+","
+                        + str(data["CO2"])+","+str(data["dust"]))
         self.buffer = []
 
 
@@ -111,6 +131,9 @@ class Framework:
             sensors["temp"] = 0.1*int(data[17:21])
             sensors["humidity"] = int(data[23:26])
             sensors["light"] = int(data[28:31])
+            sensors["CO2"] = 50
+            sensors["power"] = 1.0
+
             print sensors
         except ValueError as e:
             print e
