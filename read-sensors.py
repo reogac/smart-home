@@ -7,10 +7,10 @@ import pickle as pk
 import numpy as np
 
 PROBING_INTERVAL = 1 #reading at 1sec interval. It should be not to small
-SAVING_INTERVAL = 5
+SAVING_INTERVAL = 30
 FW_KEY = "(02)"
 NUM_SENSORS = 5
-PREDICTION_INTERVAL = 15
+PREDICTION_INTERVAL = 60
 SENSOR_DATA_BUFFER_SIZE = 10
 SENSOR_DATA_FILE_NAME = "sensor-raw-data.csv"
 MODEL_FILE_NAME = "model.pk"
@@ -98,7 +98,7 @@ class SensorDataManager:
     def __init__(self):
         self.last_saving_time = datetime.now()
         self.buffer=[]
-        with open(SENSOR_DATA_FILE_NAME, "a") as f:
+        with open(SENSOR_DATA_FILE_NAME, "w") as f:
             f.write("time,power,temp,humidity,light,CO2,dust\n")
 
     def handle_data(self, data):
@@ -134,13 +134,13 @@ class Framework:
     def parse_sensor_data(self, data):
         sensors={}
         try:
-            sensors["time"] = str(datetime.now())
+            sensors["time"] = datetime.now()
             sensors["dust"] = 0.01*int(data[10:15])
             sensors["temp"] = 0.1*int(data[17:21])
             sensors["humidity"] = int(data[23:26])
             sensors["light"] = int(data[28:31])
             sensors["CO2"] = 50
-            sensors["power"] = 1.0
+            sensors["power"] = 0.0
         except ValueError as e:
             print e
 
