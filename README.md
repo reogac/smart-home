@@ -1,14 +1,21 @@
-##file list:
+# Files that compose this project
 
-`modelling.py` : data preprocessing and model building utilities
-`smart-aircon.py` : main program.
-`read-sensors.py`, `merge-evaluation.py`: just for experiment.
-`sensor-data.csv`: raw sensors data from one of the experiment offices.
+| File                   | Description                                                   |
+| -----------------------|:-------------------------------------------------------------:|
+| `modelling.py`         | data preprocessing and model building utilities               | 
+| `smart-aircon.py`      | main program                                                  | 
+| `read-sensors.py`      | just for experiment.                                          | 
+| `merge-evaluation.py`  | just for experiment                                           | 
+| `sensor-data.csv`      | raw sensors data from one of the experiment offices           | 
 
-##prediction evaluation:
+#  Evaluate using 5-fold cross validation:
 
-5-fold cross validation was implemented and it can be done with following command:
+```bash
+./smart-aircon evaluate -t sensor-data.csv
+```
 
-`./smart-aircon evaluate` -t sensor-data.csv
+# Other commands
 
-type `./smart-aircon --help` for other commands
+```bash
+./smart-aircon --help
+```
